@@ -5,6 +5,18 @@
 > 🚀 **¿Querés verlo online sin instalar nada?** Mirá la guía paso a paso en
 > [`DEPLOY.md`](./DEPLOY.md) para publicarlo gratis en Vercel en ~5 minutos.
 
+## 🔐 Modo demo vs. cuentas reales
+
+Clientany funciona de dos formas según tengas o no configurado Supabase:
+
+- **Modo demo (por defecto):** sin variables de entorno, cualquiera entra directo a la app y sus
+  datos se guardan en el navegador. Ideal para mostrar/probar.
+- **Cuentas reales:** al configurar **Supabase** (auth + base de datos) y **Resend** (emails), la app
+  pide **registro/login** (email o Google) y guarda todo en la nube, sincronizado entre dispositivos.
+
+👉 Para activar cuentas reales seguí [`SUPABASE.md`](./SUPABASE.md). Stack: **Supabase + Resend +
+Vercel + GitHub**.
+
 
 **Clientany** es el CRM multicanal pensado exclusivamente para **ecommerces de LATAM**.
 Conectá **todas** las redes y canales donde están tus clientes hoy, unificá la atención en una

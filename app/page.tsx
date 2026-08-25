@@ -166,10 +166,10 @@ export default function Landing() {
             <a href="#precios" className="hover:text-white">Precios</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/panel" className="btn-ghost hidden px-4 py-2 text-sm sm:inline-flex">
+            <Link href="/login" className="btn-ghost hidden px-4 py-2 text-sm sm:inline-flex">
               Ingresar
             </Link>
-            <Link href="/panel" className="btn-primary px-4 py-2 text-sm">
+            <Link href="/registro" className="btn-primary px-4 py-2 text-sm">
               Probar gratis <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -198,7 +198,7 @@ export default function Landing() {
             Todo dividido por marca y pensado 100% para ecommerce.
           </p>
           <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/panel" className="btn-primary w-full px-6 py-3 text-base sm:w-auto">
+            <Link href="/registro" className="btn-primary w-full px-6 py-3 text-base sm:w-auto">
               <Rocket className="h-5 w-5" /> Empezar ahora — gratis
             </Link>
             <Link href="/track" className="btn-ghost w-full px-6 py-3 text-base sm:w-auto">
@@ -522,7 +522,7 @@ export default function Landing() {
                 <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-400" /> {t}</li>
               ))}
             </ul>
-            <Link href="/panel" className="btn-ghost mt-6 w-full">Empezar gratis</Link>
+            <Link href="/registro" className="btn-ghost mt-6 w-full">Empezar gratis</Link>
           </div>
           <div className="card relative border-brand-500/40 p-7 shadow-glow">
             <span className="absolute -top-3 left-1/2 -translate-x-1/2 chip bg-brand-500 text-white">Más elegido</span>
@@ -536,7 +536,7 @@ export default function Landing() {
                 <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-400" /> {t}</li>
               ))}
             </ul>
-            <Link href="/panel" className="btn-primary mt-6 w-full">Probar Growth</Link>
+            <Link href="/registro" className="btn-primary mt-6 w-full">Probar Growth</Link>
           </div>
         </div>
       </section>
@@ -579,7 +579,7 @@ export default function Landing() {
               Sumá tus canales, seguí tus envíos y recuperá carritos en una sola plataforma pensada
               para vos.
             </p>
-            <Link href="/panel" className="btn-primary mx-auto mt-7 w-fit px-7 py-3 text-base">
+            <Link href="/registro" className="btn-primary mx-auto mt-7 w-fit px-7 py-3 text-base">
               <Rocket className="h-5 w-5" /> Empezar gratis
             </Link>
           </div>
@@ -599,7 +599,7 @@ export default function Landing() {
           <div className="flex items-center gap-5">
             <a href="#features" className="hover:text-white">Funciones</a>
             <a href="#precios" className="hover:text-white">Precios</a>
-            <Link href="/panel" className="hover:text-white">Ingresar</Link>
+            <Link href="/login" className="hover:text-white">Ingresar</Link>
           </div>
         </div>
         <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-xs text-ink-600 lg:px-6">

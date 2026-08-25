@@ -6,12 +6,14 @@ import Topbar from "@/components/Topbar";
 import MobileNav from "@/components/MobileNav";
 import Onboarding from "@/components/Onboarding";
 import { useData, useHydrated } from "@/lib/data-store";
+import { useCloudWorkspace } from "@/lib/cloud-sync";
 
 export default function AppFrame({ children }: { children: React.ReactNode }) {
   const hydrated = useHydrated();
+  const { ready: cloudReady } = useCloudWorkspace();
   const onboardingDone = useData((s) => s.onboardingDone);
 
-  if (!hydrated) {
+  if (!hydrated || !cloudReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-ink-950">
         <div className="flex flex-col items-center gap-3">

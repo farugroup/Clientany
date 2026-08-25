@@ -512,6 +512,49 @@ export const useData = create<DataState>()(
 
 export const genId = uid;
 
+// Claves de datos que se sincronizan con la nube (todo menos las funciones).
+const WORKSPACE_KEYS = [
+  "onboardingDone",
+  "usingSampleData",
+  "settings",
+  "integrations",
+  "brands",
+  "channels",
+  "stores",
+  "conversations",
+  "messages",
+  "orders",
+  "carts",
+  "mlQuestions",
+  "leads",
+  "campaigns",
+  "pipelineStages",
+  "deals",
+  "agents",
+  "queues",
+  "quickReplies",
+  "helpdesk",
+  "products",
+  "labels",
+  "broadcasts",
+] as const;
+
+export function snapshotWorkspace(): Record<string, unknown> {
+  const s = useData.getState() as unknown as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  WORKSPACE_KEYS.forEach((k) => (out[k] = s[k]));
+  return out;
+}
+
+export function applyWorkspace(data: Record<string, unknown>) {
+  if (!data || typeof data !== "object") return;
+  const patch: Record<string, unknown> = {};
+  WORKSPACE_KEYS.forEach((k) => {
+    if (k in data) patch[k] = data[k];
+  });
+  useData.setState(patch as Partial<DataState>);
+}
+
 // Hydration helper to avoid SSR/client mismatch when reading persisted state.
 export function useHydrated() {
   const [hydrated, setHydrated] = useState(false);
