@@ -27,7 +27,7 @@ export default function Sidebar() {
   const { sidebarOpen, setSidebarOpen } = useApp();
   const badges = useBadges();
 
-  const groups = ["principal", "canales", "crecimiento", "cuenta"] as const;
+  const groups = ["principal", "ventas", "canales", "crecimiento", "cuenta"] as const;
 
   return (
     <>

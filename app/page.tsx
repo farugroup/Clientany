@@ -14,6 +14,9 @@ import {
   Inbox,
   Megaphone,
   Building2,
+  Filter,
+  Bot,
+  BookOpen,
   MessageCircle,
   Instagram,
   Facebook,
@@ -50,8 +53,20 @@ const features = [
   {
     icon: Inbox,
     color: "#8b5cf6",
-    title: "Bandeja unificada",
-    desc: "Todas las conversaciones de todos los canales y marcas en una sola pantalla. Nada se te escapa.",
+    title: "Bandeja + Tickets (Whaticket)",
+    desc: "Bandeja unificada con sistema de tickets: colas, agentes, protocolo, notas internas, respuestas rápidas y encuesta de satisfacción.",
+  },
+  {
+    icon: Filter,
+    color: "#16a34a",
+    title: "Embudo de ventas (estilo Kommo)",
+    desc: "Pipeline Kanban con etapas, tarjetas de oportunidad, tareas y notas. Arrastrá cada venta hasta cerrarla.",
+  },
+  {
+    icon: Bot,
+    color: "#06b6d4",
+    title: "Chatbot y automatizaciones",
+    desc: "Menú automático que deriva a la cola correcta, mensajes de bienvenida y ausencia, horarios de atención.",
   },
   {
     icon: Truck,
@@ -64,6 +79,12 @@ const features = [
     color: "#f59e0b",
     title: "Recuperador de carritos",
     desc: "Nos conectamos a tu tienda y convertimos las ventas perdidas con flujos automáticos por WhatsApp y email.",
+  },
+  {
+    icon: BookOpen,
+    color: "#25D366",
+    title: "WhatsApp Business completo",
+    desc: "Catálogo de productos, perfil de empresa, etiquetas, listas de difusión y tu link/QR de contacto.",
   },
   {
     icon: Tag,
@@ -79,28 +100,29 @@ const features = [
   },
 ];
 
-// Comparación vs categorías de apps del mercado (sin nombrar marcas para ser justos).
+// Comparación vs categorías de herramientas (a modo ilustrativo por categoría).
 const comparison = [
-  { feature: "Pensado exclusivamente para ecommerce", clientany: true, whatsapp: false, crm: false, mailing: false },
-  { feature: "WhatsApp, IG y ML ilimitados (sin cobrar por número)", clientany: true, whatsapp: "partial", crm: false, mailing: false },
-  { feature: "Multi-marca con cambio en 1 clic", clientany: true, whatsapp: false, crm: "partial", mailing: false },
-  { feature: "Seguimiento de envíos integrado", clientany: true, whatsapp: false, crm: false, mailing: false },
-  { feature: "Recuperador de carritos multi-tienda", clientany: true, whatsapp: false, crm: "partial", mailing: "partial" },
-  { feature: "Mercado Libre (preguntas + mensajes)", clientany: true, whatsapp: "partial", crm: false, mailing: false },
-  { feature: "Lead Magnet para capturar emails de ML", clientany: true, whatsapp: false, crm: false, mailing: false },
-  { feature: "Email + WhatsApp marketing en un solo lugar", clientany: true, whatsapp: false, crm: "partial", mailing: "partial" },
-  { feature: "Onboarding para arrancar el mismo día", clientany: true, whatsapp: "partial", crm: false, mailing: true },
+  { feature: "Bandeja multiagente con tickets y colas", clientany: true, whaticket: true, kommo: "partial", wabiz: false },
+  { feature: "Embudo de ventas Kanban (pipeline)", clientany: true, whaticket: false, kommo: true, wabiz: false },
+  { feature: "Chatbot, horarios y respuestas rápidas", clientany: true, whaticket: true, kommo: "partial", wabiz: "partial" },
+  { feature: "Catálogo, etiquetas y difusión de WhatsApp", clientany: true, whaticket: "partial", kommo: false, wabiz: true },
+  { feature: "WhatsApp, IG y ML ilimitados por marca", clientany: true, whaticket: "partial", kommo: "partial", wabiz: false },
+  { feature: "Seguimiento de envíos integrado", clientany: true, whaticket: false, kommo: false, wabiz: false },
+  { feature: "Recuperador de carritos multi-tienda", clientany: true, whaticket: false, kommo: false, wabiz: false },
+  { feature: "Mercado Libre + Lead Magnet", clientany: true, whaticket: false, kommo: false, wabiz: false },
+  { feature: "Campañas de Email + WhatsApp marketing", clientany: true, whaticket: "partial", kommo: "partial", wabiz: "partial" },
+  { feature: "Pensado exclusivamente para ecommerce", clientany: true, whaticket: false, kommo: false, wabiz: false },
 ];
 
 const columns: {
-  key: "clientany" | "whatsapp" | "crm" | "mailing";
+  key: "clientany" | "whaticket" | "kommo" | "wabiz";
   label: string;
   highlight?: boolean;
 }[] = [
   { key: "clientany", label: "Clientany", highlight: true },
-  { key: "whatsapp", label: "Apps de WhatsApp multiagente" },
-  { key: "crm", label: "CRMs genéricos" },
-  { key: "mailing", label: "Plataformas de mailing" },
+  { key: "whaticket", label: "Apps tipo Whaticket" },
+  { key: "kommo", label: "CRMs tipo Kommo" },
+  { key: "wabiz", label: "WhatsApp Business" },
 ];
 
 const steps = [
@@ -335,8 +357,8 @@ export default function Landing() {
             Por qué Clientany y no otra app
           </h2>
           <p className="mt-3 text-ink-300">
-            Las herramientas del mercado resuelven una parte. Clientany junta todo lo que un
-            ecommerce necesita en una sola plataforma.
+            El helpdesk de una app tipo Whaticket, el embudo de un CRM tipo Kommo y todo lo de
+            WhatsApp Business — juntos y pensados para ecommerce, en una sola plataforma.
           </p>
         </div>
 
@@ -373,7 +395,7 @@ export default function Landing() {
                       <td
                         key={c.key}
                         className={`p-3 text-center ${c.highlight ? "bg-brand-500/5" : ""} ${
-                          c.key === "mailing" ? "rounded-r-lg" : ""
+                          c.key === "wabiz" ? "rounded-r-lg" : ""
                         }`}
                       >
                         <Cell value={val} highlight={c.highlight} />

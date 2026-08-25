@@ -6,13 +6,16 @@ import {
   Send,
   Paperclip,
   Sparkles,
-  MoreVertical,
   Truck,
-  Tag,
   CheckCheck,
   ArrowLeft,
   Bot,
   Filter,
+  StickyNote,
+  CheckCircle2,
+  Clock,
+  Inbox as InboxIcon,
+  Star,
 } from "lucide-react";
 import { channelMeta } from "@/lib/channels";
 import { useApp, brandById } from "@/lib/store";
@@ -28,18 +31,20 @@ const channelFilters: { key: ChannelType | "all"; label: string }[] = [
   { key: "messenger", label: "Messenger" },
 ];
 
-const cannedReplies = [
-  "¡Hola! 👋 Gracias por escribirnos. ¿En qué te podemos ayudar?",
-  "Sí, tenemos stock disponible. ¿Te paso el link de compra?",
-  "Realizamos envíos a todo el país 📦 en 24 a 72 hs.",
-  "Podés seguir tu pedido acá: clientany.app/track",
-];
-
 export default function InboxPage() {
   const activeBrandId = useApp((s) => s.activeBrandId);
   const conversations = useData((s) => s.conversations);
   const messagesByConversation = useData((s) => s.messages);
   const orders = useData((s) => s.orders);
+  const queues = useData((s) => s.queues);
+  const agents = useData((s) => s.agents);
+  const quickReplies = useData((s) => s.quickReplies);
+  const setTicketStatus = useData((s) => s.setTicketStatus);
+  const assignTicket = useData((s) => s.assignTicket);
+  const setTicketQueue = useData((s) => s.setTicketQueue);
+  const addTicketNote = useData((s) => s.addTicketNote);
+  const [showNotes, setShowNotes] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
   const sendMessage = useData((s) => s.sendMessage);
   const markRead = useData((s) => s.markRead);
   const [channelFilter, setChannelFilter] = useState<ChannelType | "all">("all");
@@ -214,17 +219,116 @@ export default function InboxPage() {
                 })()}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-white">
-                  {selected.customerName}
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-sm font-semibold text-white">
+                    {selected.customerName}
+                  </span>
+                  {selected.protocol && (
+                    <span className="chip bg-ink-800 font-mono text-[10px] text-ink-400">
+                      {selected.protocol}
+                    </span>
+                  )}
                 </div>
                 <div className="truncate text-xs text-ink-400">
                   {channelMeta[selected.channel].label} · {selected.handle}
                 </div>
               </div>
-              <button className="rounded-lg p-2 text-ink-300 hover:bg-ink-800">
-                <MoreVertical className="h-5 w-5" />
+              {selected.status === "closed" && selected.rating && (
+                <span className="chip bg-fuchsia-500/10 text-fuchsia-300">
+                  <Star className="h-3 w-3 fill-current" /> {selected.rating}
+                </span>
+              )}
+            </div>
+
+            {/* Ticket toolbar (Whaticket) */}
+            <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-ink-800 bg-ink-900/60 px-3 py-2">
+              <div className="flex shrink-0 rounded-lg border border-ink-700 bg-ink-850 p-0.5">
+                {([
+                  { s: "open", label: "Abierto", icon: InboxIcon, color: "#598bff" },
+                  { s: "pending", label: "Pendiente", icon: Clock, color: "#f59e0b" },
+                  { s: "closed", label: "Resuelto", icon: CheckCircle2, color: "#16a34a" },
+                ] as const).map((o) => (
+                  <button
+                    key={o.s}
+                    onClick={() => setTicketStatus(selected.id, o.s)}
+                    className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition ${
+                      selected.status === o.s ? "bg-ink-700 text-white" : "text-ink-400 hover:text-white"
+                    }`}
+                    style={selected.status === o.s ? { color: o.color } : undefined}
+                  >
+                    <o.icon className="h-3 w-3" /> {o.label}
+                  </button>
+                ))}
+              </div>
+              <select
+                value={selected.queueId ?? ""}
+                onChange={(e) => setTicketQueue(selected.id, e.target.value)}
+                className="shrink-0 rounded-lg border border-ink-700 bg-ink-850 px-2 py-1 text-[11px] text-ink-200 outline-none"
+              >
+                <option value="">Sin cola</option>
+                {queues.map((q) => (
+                  <option key={q.id} value={q.id}>{q.name}</option>
+                ))}
+              </select>
+              <select
+                value={selected.assignedTo ?? ""}
+                onChange={(e) => assignTicket(selected.id, e.target.value)}
+                className="shrink-0 rounded-lg border border-ink-700 bg-ink-850 px-2 py-1 text-[11px] text-ink-200 outline-none"
+              >
+                <option value="">Sin asignar</option>
+                {agents.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => setShowNotes((v) => !v)}
+                className={`flex shrink-0 items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium ${
+                  showNotes || (selected.internalNotes?.length ?? 0) > 0
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                    : "border-ink-700 bg-ink-850 text-ink-400"
+                }`}
+              >
+                <StickyNote className="h-3 w-3" /> Notas
+                {(selected.internalNotes?.length ?? 0) > 0 && ` (${selected.internalNotes!.length})`}
               </button>
             </div>
+
+            {/* Internal notes panel */}
+            {showNotes && (
+              <div className="border-b border-ink-800 bg-amber-500/5 p-3">
+                <div className="mb-2 space-y-1.5">
+                  {(selected.internalNotes ?? []).map((n) => (
+                    <div key={n.id} className="rounded-lg bg-ink-850 p-2 text-xs text-ink-200">
+                      <span className="font-semibold text-amber-400">{n.author}:</span> {n.text}
+                    </div>
+                  ))}
+                  {(selected.internalNotes?.length ?? 0) === 0 && (
+                    <div className="text-xs text-ink-500">
+                      Notas internas privadas — el cliente no las ve.
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={noteDraft}
+                    onChange={(e) => setNoteDraft(e.target.value)}
+                    placeholder="Escribir nota interna…"
+                    className="input py-2 text-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      if (noteDraft.trim()) {
+                        addTicketNote(selected.id, noteDraft.trim(), "Vos");
+                        setNoteDraft("");
+                      }
+                    }}
+                    className="btn-ghost px-3 py-2"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Order banner */}
             {relatedOrder && (
@@ -281,18 +385,19 @@ export default function InboxPage() {
               ))}
             </div>
 
-            {/* Canned replies */}
+            {/* Quick replies */}
             <div className="no-scrollbar flex gap-2 overflow-x-auto border-t border-ink-800 px-3 py-2">
               <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-brand-300">
-                <Sparkles className="h-3 w-3" /> Sugerencias IA:
+                <Sparkles className="h-3 w-3" /> Rápidas:
               </span>
-              {cannedReplies.map((r, i) => (
+              {quickReplies.map((r) => (
                 <button
-                  key={i}
-                  onClick={() => setDraft(r)}
+                  key={r.id}
+                  onClick={() => setDraft(r.text)}
                   className="chip shrink-0 border border-ink-700 bg-ink-850 text-ink-300 hover:text-white"
+                  title={r.text}
                 >
-                  {r.length > 42 ? r.slice(0, 42) + "…" : r}
+                  <span className="font-mono text-brand-300">{r.shortcut}</span>
                 </button>
               ))}
             </div>
@@ -304,7 +409,11 @@ export default function InboxPage() {
               </button>
               <textarea
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  const match = quickReplies.find((q) => q.shortcut === v.trim());
+                  setDraft(match ? match.text : v);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -312,7 +421,7 @@ export default function InboxPage() {
                   }
                 }}
                 rows={1}
-                placeholder={`Responder por ${channelMeta[selected.channel].label}…`}
+                placeholder={`Responder por ${channelMeta[selected.channel].label}… (probá /envio)`}
                 className="input max-h-32 min-h-[44px] flex-1 resize-none py-3"
               />
               <button className="btn-primary h-11 px-4" onClick={handleSend} disabled={!draft.trim()}>

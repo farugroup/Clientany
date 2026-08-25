@@ -47,6 +47,13 @@ export interface StoreConnection {
   abandonedCarts: number;
 }
 
+export interface TicketNote {
+  id: string;
+  text: string;
+  author: string;
+  at: string;
+}
+
 export interface Conversation {
   id: string;
   brandId: string;
@@ -60,8 +67,13 @@ export interface Conversation {
   timestamp: string; // ISO
   status: "open" | "pending" | "closed";
   tags: string[];
-  assignedTo?: string;
+  assignedTo?: string; // agent id
   orderNumber?: string;
+  // Helpdesk / Whaticket
+  queueId?: string;
+  protocol?: string;
+  internalNotes?: TicketNote[];
+  rating?: number; // CSAT 1-5
 }
 
 export interface Message {
@@ -206,3 +218,119 @@ export type ChecklistKey =
   | "tienda"
   | "pedido"
   | "campana";
+
+// ---- Embudo de ventas (Kommo) ----
+export interface PipelineStage {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface DealTask {
+  id: string;
+  text: string;
+  due: string;
+  done: boolean;
+}
+
+export interface DealNote {
+  id: string;
+  text: string;
+  at: string;
+}
+
+export interface Deal {
+  id: string;
+  brandId: string;
+  title: string;
+  contactName: string;
+  contactHandle: string;
+  channel: ChannelType;
+  value: number;
+  currency: string;
+  stageId: string;
+  responsible: string; // agent id
+  source: string;
+  tags: string[];
+  createdAt: string;
+  expectedClose?: string;
+  notes: DealNote[];
+  tasks: DealTask[];
+}
+
+// ---- Helpdesk (Whaticket) ----
+export type AgentRole = "admin" | "supervisor" | "agente";
+
+export interface Agent {
+  id: string;
+  name: string;
+  email: string;
+  role: AgentRole;
+  online: boolean;
+  avatar: string;
+}
+
+export interface Queue {
+  id: string;
+  name: string;
+  color: string;
+  autoAssign: boolean;
+}
+
+export interface QuickReply {
+  id: string;
+  shortcut: string; // e.g. /envio
+  text: string;
+}
+
+export interface BusinessHoursDay {
+  day: string;
+  open: boolean;
+  from: string;
+  to: string;
+}
+
+export interface HelpdeskSettings {
+  hours: BusinessHoursDay[];
+  greetingEnabled: boolean;
+  greetingMessage: string;
+  awayEnabled: boolean;
+  awayMessage: string;
+  chatbotEnabled: boolean;
+  chatbotMenu: { key: string; label: string; queueId: string }[];
+  csatEnabled: boolean;
+  csatMessage: string;
+}
+
+// ---- Catálogo (WhatsApp Business) ----
+export interface Product {
+  id: string;
+  brandId: string;
+  name: string;
+  price: number;
+  currency: string;
+  emoji: string;
+  description: string;
+  available: boolean;
+  category: string;
+}
+
+export interface BusinessLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export type BroadcastStatus = "borrador" | "programada" | "enviada";
+
+export interface Broadcast {
+  id: string;
+  brandId: string;
+  name: string;
+  channel: ChannelType;
+  audienceLabel: string;
+  recipients: number;
+  text: string;
+  scheduledFor?: string;
+  status: BroadcastStatus;
+}
