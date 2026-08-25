@@ -46,7 +46,7 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5">
-          <Link href="/" className="flex items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
+          <Link href="/panel" className="flex items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-glow">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
@@ -83,8 +83,8 @@ export default function Sidebar() {
                 .filter((n) => n.group === group)
                 .map((item) => {
                   const active =
-                    item.href === "/"
-                      ? pathname === "/"
+                    item.href === "/panel"
+                      ? pathname === "/panel"
                       : pathname.startsWith(item.href);
                   const badge = item.badgeKey ? badges[item.badgeKey] : 0;
                   const Icon = item.icon;

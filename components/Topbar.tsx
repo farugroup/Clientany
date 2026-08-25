@@ -20,7 +20,7 @@ export default function Topbar() {
   const pathname = usePathname();
   const current =
     navItems.find((n) =>
-      n.href === "/" ? pathname === "/" : pathname.startsWith(n.href)
+      n.href === "/panel" ? pathname === "/panel" : pathname.startsWith(n.href)
     ) ?? navItems[0];
 
   return (

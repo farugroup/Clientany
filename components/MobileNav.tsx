@@ -7,7 +7,7 @@ import { useApp } from "@/lib/store";
 import { useData } from "@/lib/data-store";
 
 const items = [
-  { href: "/", label: "Panel", icon: LayoutDashboard },
+  { href: "/panel", label: "Panel", icon: LayoutDashboard },
   { href: "/inbox", label: "Bandeja", icon: Inbox, badge: "inbox" as const },
   { href: "/tracking", label: "Envíos", icon: Truck },
   { href: "/carritos", label: "Carritos", icon: ShoppingCart, badge: "carts" as const },
@@ -31,7 +31,7 @@ export default function MobileNav() {
       <div className="flex items-stretch justify-around pb-[env(safe-area-inset-bottom)]">
         {items.map((item) => {
           const active =
-            item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            item.href === "/panel" ? pathname === "/panel" : pathname.startsWith(item.href);
           const badge = item.badge ? badges[item.badge] : 0;
           const Icon = item.icon;
           return (

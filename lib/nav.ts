@@ -20,7 +20,7 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { href: "/", label: "Panel", icon: LayoutDashboard, group: "principal" },
+  { href: "/panel", label: "Panel", icon: LayoutDashboard, group: "principal" },
   { href: "/inbox", label: "Bandeja unificada", icon: Inbox, badgeKey: "inbox", group: "principal" },
   { href: "/channels", label: "Canales & Tiendas", icon: Plug, group: "canales" },
   { href: "/mercadolibre", label: "Mercado Libre", icon: Tag, badgeKey: "ml", group: "canales" },
