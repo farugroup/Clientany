@@ -9,6 +9,9 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "dependencies": {
     "eslint-config-next": "^14.2.35",
     "lucide-react": "^0.454.0",

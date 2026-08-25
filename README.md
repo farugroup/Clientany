@@ -1,5 +1,11 @@
 # Clientany — CRM multicanal para ecommerce 🛒
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/farugroup/Clientany/tree/claude/crm-multicanal-ecommerce-o236ay&project-name=clientany&repository-name=clientany)
+
+> 🚀 **¿Querés verlo online sin instalar nada?** Mirá la guía paso a paso en
+> [`DEPLOY.md`](./DEPLOY.md) para publicarlo gratis en Vercel en ~5 minutos.
+
+
 **Clientany** es el CRM multicanal pensado exclusivamente para **ecommerces de LATAM**.
 Conectá **todas** las redes y canales donde están tus clientes hoy, unificá la atención en una
 sola bandeja, seguí tus envíos, recuperá carritos abandonados, respondé Mercado Libre y hacé
