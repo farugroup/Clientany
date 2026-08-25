@@ -20,8 +20,9 @@ import {
 import { channelMeta } from "@/lib/channels";
 import { useApp, brandById } from "@/lib/store";
 import { useData } from "@/lib/data-store";
-import { timeAgo, dateTime, money } from "@/lib/format";
+import { timeAgo, dateTime } from "@/lib/format";
 import type { ChannelType, Message } from "@/lib/types";
+import CustomerContext from "@/components/CustomerContext";
 
 const channelFilters: { key: ChannelType | "all"; label: string }[] = [
   { key: "all", label: "Todos" },
@@ -35,7 +36,6 @@ export default function InboxPage() {
   const activeBrandId = useApp((s) => s.activeBrandId);
   const conversations = useData((s) => s.conversations);
   const messagesByConversation = useData((s) => s.messages);
-  const orders = useData((s) => s.orders);
   const queues = useData((s) => s.queues);
   const agents = useData((s) => s.agents);
   const quickReplies = useData((s) => s.quickReplies);
@@ -75,10 +75,6 @@ export default function InboxPage() {
         },
       ]
     : [];
-
-  const relatedOrder = selected?.orderNumber
-    ? orders.find((o) => o.orderNumber === selected.orderNumber)
-    : undefined;
 
   function openConversation(id: string) {
     setSelectedId(id);
@@ -330,25 +326,8 @@ export default function InboxPage() {
               </div>
             )}
 
-            {/* Order banner */}
-            {relatedOrder && (
-              <div className="flex items-center gap-2 border-b border-ink-800 bg-ink-900/60 px-4 py-2">
-                <Truck className="h-4 w-4 text-brand-300" />
-                <span className="text-xs text-ink-300">
-                  Pedido{" "}
-                  <span className="font-mono font-semibold text-white">
-                    {relatedOrder.orderNumber}
-                  </span>{" "}
-                  · {money(relatedOrder.total, relatedOrder.currency)}
-                </span>
-                <a
-                  href={`/tracking?q=${relatedOrder.orderNumber}`}
-                  className="ml-auto text-xs font-semibold text-brand-300 hover:text-brand-200"
-                >
-                  Ver seguimiento →
-                </a>
-              </div>
-            )}
+            {/* Ficha del cliente (identificación por celular + datos de compra) */}
+            <CustomerContext conversation={selected} />
 
             {/* Messages */}
             <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto bg-ink-950/40 p-4">

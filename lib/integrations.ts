@@ -92,14 +92,14 @@ export const integrationDefs: IntegrationDef[] = [
     logo: "🛍️",
     color: "#2C6EF2",
     category: "tienda",
-    summary: "Traé pedidos y carritos abandonados para seguimiento y recuperación.",
+    summary: "Sincroniza pedidos y carritos, e identifica al cliente por su celular con su historial de compras al escribir.",
     liveNow: true,
     docsUrl: "https://tiendanube.github.io/api-documentation/authentication",
     steps: [
       "Entrá al panel de Tienda Nube → Aplicaciones.",
       "Generá las credenciales de la API (App ID y token).",
       "Pegá el Store ID y el token acá.",
-      "Sincronizamos pedidos y carritos automáticamente.",
+      "Sincronizamos pedidos y carritos. Al entrar un WhatsApp, detectamos por el número si es cliente y traemos su orden y cuánto gastó.",
     ],
     fields: [
       { name: "storeId", label: "Store ID", placeholder: "1234567" },

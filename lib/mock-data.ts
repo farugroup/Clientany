@@ -228,6 +228,51 @@ export const orders: Order[] = [
       { status: "entregado", label: "Entregado", detail: "Nueva entrega estimada", timestamp: inDays(1), done: false },
     ],
   },
+  // --- Pedidos históricos (para historial de compra / LTV) ---
+  {
+    id: "o5", orderNumber: "LUN-9802", brandId: "b_lunar", customerName: "Valentina Sosa",
+    email: "valen.sosa@gmail.com", phone: "+54 9 11 4477-2231", status: "entregado", carrier: "Andreani",
+    trackingCode: "AND-551200788", trackingUrl: "#", eta: days(28), total: 31500, currency: "ARS",
+    items: [{ name: "Agua micelar 200ml", qty: 1 }, { name: "Tónico exfoliante", qty: 1 }],
+    createdAt: days(34), destination: "Palermo, CABA",
+    timeline: [
+      { status: "confirmado", label: "Pedido confirmado", detail: "Pago recibido", timestamp: days(34), done: true },
+      { status: "entregado", label: "Entregado", detail: "Entregado y recibido", timestamp: days(28), location: "Palermo", done: true },
+    ],
+  },
+  {
+    id: "o6", orderNumber: "LUN-8450", brandId: "b_lunar", customerName: "Valentina Sosa",
+    email: "valen.sosa@gmail.com", phone: "+54 9 11 4477-2231", status: "entregado", carrier: "Correo Argentino",
+    trackingCode: "CA-448120033AR", trackingUrl: "#", eta: days(70), total: 26900, currency: "ARS",
+    items: [{ name: "Sérum niacinamida", qty: 1 }],
+    createdAt: days(76), destination: "Palermo, CABA",
+    timeline: [
+      { status: "confirmado", label: "Pedido confirmado", detail: "Pago recibido", timestamp: days(76), done: true },
+      { status: "entregado", label: "Entregado", detail: "Entregado y recibido", timestamp: days(70), location: "Palermo", done: true },
+    ],
+  },
+  {
+    id: "o7", orderNumber: "KAP-7010", brandId: "b_kapeta", customerName: "Flor Benítez",
+    email: "flor.benitez@gmail.com", phone: "+54 9 351 555-1020", status: "entregado", carrier: "OCA",
+    trackingCode: "OCA-228100455", trackingUrl: "#", eta: days(40), total: 45800, currency: "ARS",
+    items: [{ name: "Campera de jean", qty: 1 }, { name: "Remera básica x2", qty: 2 }],
+    createdAt: days(46), destination: "Cerro de las Rosas, Córdoba",
+    timeline: [
+      { status: "confirmado", label: "Pedido confirmado", detail: "Pago recibido", timestamp: days(46), done: true },
+      { status: "entregado", label: "Entregado", detail: "Entregado y recibido", timestamp: days(40), location: "Córdoba", done: true },
+    ],
+  },
+  {
+    id: "o8", orderNumber: "MATE-4120", brandId: "b_mate", customerName: "Diego Ferreyra",
+    email: "dferreyra@gmail.com", phone: "+54 9 341 700-3344", status: "entregado", carrier: "Andreani",
+    trackingCode: "AND-110220330", trackingUrl: "#", eta: days(52), total: 18700, currency: "ARS",
+    items: [{ name: "Yerbera de cuero", qty: 1 }],
+    createdAt: days(58), destination: "Fisherton, Rosario",
+    timeline: [
+      { status: "confirmado", label: "Pedido confirmado", detail: "Pago recibido", timestamp: days(58), done: true },
+      { status: "entregado", label: "Entregado", detail: "Entregado y recibido", timestamp: days(52), location: "Rosario", done: true },
+    ],
+  },
 ];
 
 export const abandonedCarts: AbandonedCart[] = [
