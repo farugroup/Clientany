@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronsUpDown, Check, LayoutGrid, Plus } from "lucide-react";
-import { brands, channels } from "@/lib/mock-data";
+import { useData } from "@/lib/data-store";
 import { useApp } from "@/lib/store";
 
 export default function BrandSwitcher() {
   const { activeBrandId, setActiveBrand } = useApp();
+  const brands = useData((s) => s.brands);
+  const channels = useData((s) => s.channels);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 

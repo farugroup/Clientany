@@ -15,19 +15,19 @@ import {
 import { StatCard, SectionTitle, Pill } from "@/components/ui";
 import { RevenueChart, ChannelsChart } from "@/components/DashboardCharts";
 import { useApp, brandById } from "@/lib/store";
-import {
-  channels,
-  conversations,
-  abandonedCarts,
-  orders,
-  campaigns,
-  storeConnections,
-} from "@/lib/mock-data";
+import { useData } from "@/lib/data-store";
 import { channelMeta, orderStatusMeta } from "@/lib/channels";
 import { money, compactMoney, timeAgo, num } from "@/lib/format";
 
 export default function Dashboard() {
   const activeBrandId = useApp((s) => s.activeBrandId);
+  const channels = useData((s) => s.channels);
+  const conversations = useData((s) => s.conversations);
+  const abandonedCarts = useData((s) => s.carts);
+  const orders = useData((s) => s.orders);
+  const campaigns = useData((s) => s.campaigns);
+  const storeConnections = useData((s) => s.stores);
+  const settings = useData((s) => s.settings);
   const scope = activeBrandId === "all" ? "todas tus marcas" : brandById(activeBrandId)?.name;
   const inBrand = <T extends { brandId: string }>(arr: T[]) =>
     activeBrandId === "all" ? arr : arr.filter((i) => i.brandId === activeBrandId);
@@ -65,7 +65,8 @@ export default function Dashboard() {
               <span className="text-xs text-ink-400">Vista de {scope}</span>
             </div>
             <h1 className="mt-2 text-xl font-extrabold tracking-tight text-white lg:text-2xl">
-              ¡Hola, Iván! 👋 Todo tu ecommerce en un solo lugar
+              ¡Hola{settings.ownerName ? `, ${settings.ownerName.split(" ")[0]}` : ""}! 👋 Todo tu
+              ecommerce en un solo lugar
             </h1>
             <p className="mt-1 text-sm text-ink-300">
               {num(unread)} mensajes sin responder · {myConvos.length} conversaciones abiertas ·{" "}

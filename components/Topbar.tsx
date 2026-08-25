@@ -4,10 +4,19 @@ import { Menu, Search, Bell, Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { navItems } from "@/lib/nav";
 
 export default function Topbar() {
   const setSidebarOpen = useApp((s) => s.setSidebarOpen);
+  const settings = useData((s) => s.settings);
+  const initials =
+    (settings.ownerName || settings.businessName || "Clientany")
+      .split(" ")
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "CA";
   const pathname = usePathname();
   const current =
     navItems.find((n) =>
@@ -44,9 +53,13 @@ export default function Topbar() {
         <Link href="/channels" className="btn-primary hidden sm:inline-flex">
           <Plus className="h-4 w-4" /> Conectar canal
         </Link>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-sm font-bold text-white">
-          IF
-        </div>
+        <Link
+          href="/ajustes"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-sm font-bold text-white"
+          title="Configuración"
+        >
+          {initials}
+        </Link>
       </div>
     </header>
   );

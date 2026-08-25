@@ -167,3 +167,42 @@ export interface Campaign {
   converted: number;
   revenue: number;
 }
+
+// ---- Configuración del negocio e integraciones ----
+export interface BusinessSettings {
+  businessName: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  country: string;
+  currency: string;
+  timezone: string;
+}
+
+export type IntegrationKey =
+  | "whatsapp"
+  | "meta"
+  | "mercadolibre"
+  | "tiendanube"
+  | "shopify"
+  | "vtex"
+  | "vendany"
+  | "email";
+
+// Credenciales guardadas por el cliente para cada integración.
+// Los valores son sensibles: se guardan en el navegador del cliente (demo)
+// y en producción viajan cifrados al backend.
+export interface IntegrationConfig {
+  key: IntegrationKey;
+  enabled: boolean;
+  fields: Record<string, string>;
+  connectedAt?: string;
+}
+
+export type ChecklistKey =
+  | "perfil"
+  | "marca"
+  | "canal"
+  | "tienda"
+  | "pedido"
+  | "campana";

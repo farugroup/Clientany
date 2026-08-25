@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Inbox, Truck, ShoppingCart, Megaphone } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { channels, abandonedCarts } from "@/lib/mock-data";
+import { useData } from "@/lib/data-store";
 
 const items = [
   { href: "/", label: "Panel", icon: LayoutDashboard },
@@ -17,6 +17,8 @@ const items = [
 export default function MobileNav() {
   const pathname = usePathname();
   const activeBrandId = useApp((s) => s.activeBrandId);
+  const channels = useData((s) => s.channels);
+  const abandonedCarts = useData((s) => s.carts);
   const inBrand = <T extends { brandId: string }>(arr: T[]) =>
     activeBrandId === "all" ? arr : arr.filter((i) => i.brandId === activeBrandId);
   const badges = {

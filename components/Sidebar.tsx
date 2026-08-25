@@ -5,11 +5,14 @@ import { usePathname } from "next/navigation";
 import { X, Sparkles } from "lucide-react";
 import { navItems, groupLabels } from "@/lib/nav";
 import { useApp } from "@/lib/store";
-import { channels, abandonedCarts, mlQuestions } from "@/lib/mock-data";
+import { useData } from "@/lib/data-store";
 import BrandSwitcher from "./BrandSwitcher";
 
 function useBadges() {
   const activeBrandId = useApp((s) => s.activeBrandId);
+  const channels = useData((s) => s.channels);
+  const abandonedCarts = useData((s) => s.carts);
+  const mlQuestions = useData((s) => s.mlQuestions);
   const inBrand = <T extends { brandId: string }>(arr: T[]) =>
     activeBrandId === "all" ? arr : arr.filter((i) => i.brandId === activeBrandId);
   return {
@@ -24,7 +27,7 @@ export default function Sidebar() {
   const { sidebarOpen, setSidebarOpen } = useApp();
   const badges = useBadges();
 
-  const groups = ["principal", "canales", "crecimiento"] as const;
+  const groups = ["principal", "canales", "crecimiento", "cuenta"] as const;
 
   return (
     <>

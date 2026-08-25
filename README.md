@@ -16,6 +16,31 @@ un clic.
 > Responsive de fábrica (PC + mobile) e instalable como PWA — base para las futuras apps
 > oficiales de Android e iOS.
 
+## 🟢 Listo para usar por un cliente (desde el día 1)
+
+Clientany ya no es sólo una demo: **guarda todo lo que cargás** (en el navegador, con la misma
+capa lista para conectar a un backend real). Un ecommerce puede arrancar hoy:
+
+- **Onboarding de primer uso**: al entrar, el cliente crea su negocio y su primera marca, o
+  explora con datos de ejemplo.
+- **Todo persiste**: marcas, canales, tiendas, pedidos, carritos, leads y campañas quedan
+  guardados y se recuperan al volver.
+- **Configuración (`/ajustes`)**: perfil del negocio, **centro de integraciones** con formularios
+  de credenciales para cada plataforma, y un **checklist “Empezá mañana”** que trackea el avance.
+- **Cargá tus datos reales**: pedidos manuales o por **CSV** para que “Seguí tu envío” funcione con
+  tus órdenes; contactos manuales o desde el Lead Magnet; carritos y campañas propias.
+
+### ¿Qué se puede usar ya y qué necesita aprobación externa?
+
+| Integración | Estado | Nota |
+|---|---|---|
+| Tienda Nube / Shopify / VTEX / Vendany / Mercado Shops | 🟢 **Listo ya** | Con las credenciales de tu tienda |
+| Email marketing (Resend/SendGrid/SES) | 🟢 **Listo ya** | Verificando tu dominio |
+| Seguimiento de envíos, carritos, leads, campañas, multimarca | 🟢 **Listo ya** | Funciona con tus datos cargados |
+| WhatsApp Business (Cloud API) | 🟡 Requiere aprobación de Meta | Dejás credenciales cargadas y se activa al aprobarse |
+| Instagram / Messenger (Meta) | 🟡 Requiere aprobación de Meta | Ídem |
+| Mercado Libre (mensajes/preguntas) | 🟡 Requiere app + OAuth de ML | Ídem |
+
 ---
 
 ## ✨ Funcionalidades

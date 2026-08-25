@@ -14,39 +14,52 @@ import {
   Mail,
   Link2,
   Loader2,
+  Plus,
 } from "lucide-react";
 import type { Order } from "@/lib/types";
 import { orderStatusMeta } from "@/lib/channels";
 import { useApp, brandById } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { money, dateTime } from "@/lib/format";
 import { Pill, EmptyState } from "@/components/ui";
 import TrackingTimeline from "@/components/TrackingTimeline";
+import AddOrderModal from "@/components/AddOrderModal";
 
 function TrackingInner() {
   const activeBrandId = useApp((s) => s.activeBrandId);
+  const orders = useData((s) => s.orders);
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get("q") ?? "");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Order[] | null>(null);
   const [selected, setSelected] = useState<Order | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
 
-  async function search(q: string) {
+  function search(q: string) {
     if (!q.trim()) return;
     setLoading(true);
     setResults(null);
     setSelected(null);
-    const res = await fetch(`/api/track?q=${encodeURIComponent(q)}&brandId=${activeBrandId}`);
-    const data = await res.json();
-    setResults(data.results ?? []);
-    if (data.results?.length) setSelected(data.results[0]);
+    const needle = q.trim().toLowerCase();
+    const found = orders.filter((o) => {
+      if (activeBrandId !== "all" && o.brandId !== activeBrandId) return false;
+      return (
+        o.orderNumber.toLowerCase().includes(needle) ||
+        o.email.toLowerCase().includes(needle) ||
+        o.customerName.toLowerCase().includes(needle) ||
+        o.trackingCode.toLowerCase().includes(needle)
+      );
+    });
+    setResults(found);
+    if (found.length) setSelected(found[0]);
     setLoading(false);
   }
 
   useEffect(() => {
     if (params.get("q")) search(params.get("q")!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [orders]);
 
   const trackingLink = selected
     ? `https://clientany.app/track/${selected.orderNumber}`
@@ -73,6 +86,9 @@ function TrackingInner() {
                 <b className="text-ink-200">email</b> y respondele al cliente en tiempo real.
               </p>
             </div>
+            <button onClick={() => setShowAdd(true)} className="btn-ghost shrink-0">
+              <Plus className="h-4 w-4" /> Cargar pedido
+            </button>
           </div>
           <form
             className="relative mt-4 flex flex-col gap-2 sm:flex-row"
@@ -259,6 +275,18 @@ function TrackingInner() {
             </div>
           </div>
         </div>
+      )}
+
+      {showAdd && (
+        <AddOrderModal
+          onClose={() => setShowAdd(false)}
+          onAdded={(o) => {
+            setShowAdd(false);
+            setQuery(o.orderNumber);
+            setResults([o]);
+            setSelected(o);
+          }}
+        />
       )}
     </div>
   );

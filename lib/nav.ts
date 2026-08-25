@@ -7,6 +7,7 @@ import {
   Tag,
   Megaphone,
   Building2,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -15,7 +16,7 @@ export interface NavItem {
   label: string;
   icon: LucideIcon;
   badgeKey?: "inbox" | "carts" | "ml";
-  group: "principal" | "canales" | "crecimiento";
+  group: "principal" | "canales" | "crecimiento" | "cuenta";
 }
 
 export const navItems: NavItem[] = [
@@ -27,10 +28,12 @@ export const navItems: NavItem[] = [
   { href: "/carritos", label: "Recuperador de carritos", icon: ShoppingCart, badgeKey: "carts", group: "crecimiento" },
   { href: "/campanas", label: "Campañas & Lead Magnet", icon: Megaphone, group: "crecimiento" },
   { href: "/marcas", label: "Marcas", icon: Building2, group: "crecimiento" },
+  { href: "/ajustes", label: "Configuración", icon: Settings, group: "cuenta" },
 ];
 
 export const groupLabels: Record<NavItem["group"], string> = {
   principal: "Principal",
   canales: "Canales",
   crecimiento: "Crecimiento",
+  cuenta: "Cuenta",
 };

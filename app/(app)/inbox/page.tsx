@@ -14,12 +14,11 @@ import {
   Bot,
   Filter,
 } from "lucide-react";
-import { conversations, messagesByConversation, orders } from "@/lib/mock-data";
 import { channelMeta } from "@/lib/channels";
 import { useApp, brandById } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { timeAgo, dateTime, money } from "@/lib/format";
 import type { ChannelType, Message } from "@/lib/types";
-import { Pill } from "@/components/ui";
 
 const channelFilters: { key: ChannelType | "all"; label: string }[] = [
   { key: "all", label: "Todos" },
@@ -38,6 +37,11 @@ const cannedReplies = [
 
 export default function InboxPage() {
   const activeBrandId = useApp((s) => s.activeBrandId);
+  const conversations = useData((s) => s.conversations);
+  const messagesByConversation = useData((s) => s.messages);
+  const orders = useData((s) => s.orders);
+  const sendMessage = useData((s) => s.sendMessage);
+  const markRead = useData((s) => s.markRead);
   const [channelFilter, setChannelFilter] = useState<ChannelType | "all">("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -52,7 +56,7 @@ export default function InboxPage() {
         return false;
       return true;
     });
-  }, [activeBrandId, channelFilter, query]);
+  }, [conversations, activeBrandId, channelFilter, query]);
 
   const selected = conversations.find((c) => c.id === selectedId) ?? filtered[0] ?? null;
 
@@ -70,6 +74,18 @@ export default function InboxPage() {
   const relatedOrder = selected?.orderNumber
     ? orders.find((o) => o.orderNumber === selected.orderNumber)
     : undefined;
+
+  function openConversation(id: string) {
+    setSelectedId(id);
+    setShowChatMobile(true);
+    markRead(id);
+  }
+
+  function handleSend() {
+    if (!selected || !draft.trim()) return;
+    sendMessage(selected.id, draft.trim());
+    setDraft("");
+  }
 
   return (
     <div className="mx-auto max-w-7xl animate-fade-in">
@@ -121,10 +137,7 @@ export default function InboxPage() {
               return (
                 <button
                   key={c.id}
-                  onClick={() => {
-                    setSelectedId(c.id);
-                    setShowChatMobile(true);
-                  }}
+                  onClick={() => openConversation(c.id)}
                   className={`flex w-full items-start gap-3 border-b border-ink-800/60 p-3 text-left transition ${
                     isActive ? "bg-brand-500/10" : "hover:bg-ink-800/60"
                   }`}
@@ -292,15 +305,17 @@ export default function InboxPage() {
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
                 rows={1}
                 placeholder={`Responder por ${channelMeta[selected.channel].label}…`}
                 className="input max-h-32 min-h-[44px] flex-1 resize-none py-3"
               />
-              <button
-                className="btn-primary h-11 px-4"
-                onClick={() => setDraft("")}
-                disabled={!draft.trim()}
-              >
+              <button className="btn-primary h-11 px-4" onClick={handleSend} disabled={!draft.trim()}>
                 <Send className="h-4 w-4" />
               </button>
             </div>

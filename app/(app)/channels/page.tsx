@@ -12,9 +12,9 @@ import {
   Infinity as InfinityIcon,
   Check,
 } from "lucide-react";
-import { channels, storeConnections } from "@/lib/mock-data";
 import { channelMeta, platformMeta, connectionStatusMeta } from "@/lib/channels";
 import { useApp, brandById } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { timeAgo, num } from "@/lib/format";
 import { SectionTitle, StatusDot } from "@/components/ui";
 import type { ChannelType, StorePlatform } from "@/lib/types";
@@ -39,6 +39,11 @@ const addablePlatforms: StorePlatform[] = [
 
 export default function ChannelsPage() {
   const activeBrandId = useApp((s) => s.activeBrandId);
+  const channels = useData((s) => s.channels);
+  const storeConnections = useData((s) => s.stores);
+  const brands = useData((s) => s.brands);
+  const removeChannel = useData((s) => s.removeChannel);
+  const removeStore = useData((s) => s.removeStore);
   const [modal, setModal] = useState<null | "channel" | "store">(null);
 
   const inBrand = <T extends { brandId: string }>(arr: T[]) =>
@@ -79,7 +84,7 @@ export default function ChannelsPage() {
           { label: "Canales conectados", value: myChannels.filter((c) => c.status === "connected").length, accent: "#3563ff" },
           { label: "Tiendas conectadas", value: myStores.filter((s) => s.status === "connected").length, accent: "#16a34a" },
           { label: "Mensajes sin leer", value: num(myChannels.reduce((s, c) => s + c.unread, 0)), accent: "#f59e0b" },
-          { label: "Marcas", value: activeBrandId === "all" ? 4 : 1, accent: "#d946ef" },
+          { label: "Marcas", value: activeBrandId === "all" ? brands.length : 1, accent: "#d946ef" },
         ].map((s) => (
           <div key={s.label} className="card p-4">
             <div className="text-2xl font-extrabold text-white">{s.value}</div>
@@ -133,10 +138,15 @@ export default function ChannelsPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex gap-2">
-                  <button className="btn-ghost flex-1 py-2 text-xs">
+                  <a href="/ajustes" className="btn-ghost flex-1 py-2 text-xs">
                     <Settings2 className="h-3.5 w-3.5" /> Configurar
-                  </button>
-                  <button className="btn-ghost px-3 py-2 text-xs text-red-400 hover:bg-red-500/10">
+                  </a>
+                  <button
+                    onClick={() => {
+                      if (confirm(`¿Quitar el canal ${meta.label} (${c.label})?`)) removeChannel(c.id);
+                    }}
+                    className="btn-ghost px-3 py-2 text-xs text-red-400 hover:bg-red-500/10"
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -181,6 +191,15 @@ export default function ChannelsPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <StatusDot color={status.dot} />
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Quitar la tienda ${meta.label} (${s.url})?`)) removeStore(s.id);
+                      }}
+                      className="rounded-lg p-1 text-ink-500 hover:bg-red-500/10 hover:text-red-400"
+                      title="Quitar tienda"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -234,12 +253,43 @@ function ConnectModal({
   type: "channel" | "store";
   onClose: () => void;
 }) {
+  const brands = useData((s) => s.brands);
+  const addChannel = useData((s) => s.addChannel);
+  const addStore = useData((s) => s.addStore);
+  const activeBrandId = useApp((s) => s.activeBrandId);
+
+  const defaultBrand = activeBrandId !== "all" ? activeBrandId : brands[0]?.id ?? "";
   const [selected, setSelected] = useState<string | null>(null);
+  const [brandId, setBrandId] = useState(defaultBrand);
+  const [identifier, setIdentifier] = useState("");
   const [done, setDone] = useState(false);
+
+  const canSave = selected && brandId && identifier.trim();
+
+  function save() {
+    if (!selected || !brandId) return;
+    if (type === "channel") {
+      addChannel({
+        brandId,
+        type: selected as ChannelType,
+        label: identifier,
+        status: "pending",
+      });
+    } else {
+      addStore({
+        brandId,
+        platform: selected as StorePlatform,
+        storeName: identifier,
+        url: identifier,
+        status: "pending",
+      });
+    }
+    setDone(true);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="w-full max-w-lg animate-fade-in rounded-t-3xl border border-ink-700 bg-ink-900 p-5 sm:rounded-2xl">
+      <div className="max-h-[92vh] w-full max-w-lg animate-fade-in overflow-y-auto rounded-t-3xl border border-ink-700 bg-ink-900 p-5 sm:rounded-2xl">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-white">
             {type === "channel" ? "Conectar un canal" : "Conectar una tienda"}
@@ -254,13 +304,26 @@ function ConnectModal({
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15">
               <Check className="h-7 w-7 text-green-400" />
             </div>
-            <p className="mt-3 font-semibold text-white">¡Conexión iniciada!</p>
+            <p className="mt-3 font-semibold text-white">¡{type === "channel" ? "Canal" : "Tienda"} agregado!</p>
             <p className="mt-1 text-sm text-ink-400">
-              Te redirigimos para autorizar el acceso. La sincronización empezará en unos segundos.
+              Quedó en estado <b>pendiente</b>. Cargá las credenciales en Configuración para
+              activar la sincronización.
             </p>
-            <button onClick={onClose} className="btn-primary mt-4 w-full">
-              Entendido
-            </button>
+            <div className="mt-4 flex gap-2">
+              <a href="/ajustes" className="btn-primary flex-1">
+                Ir a Configuración
+              </a>
+              <button onClick={onClose} className="btn-ghost flex-1">
+                Listo
+              </button>
+            </div>
+          </div>
+        ) : brands.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-sm text-ink-300">Primero creá una marca para asociarle el canal.</p>
+            <a href="/marcas" className="btn-primary mt-4 w-full">
+              Crear una marca
+            </a>
           </div>
         ) : (
           <>
@@ -315,12 +378,39 @@ function ConnectModal({
                     );
                   })}
             </div>
-            <button
-              disabled={!selected}
-              onClick={() => setDone(true)}
-              className="btn-primary mt-4 w-full"
-            >
-              Continuar con la conexión
+
+            {selected && (
+              <div className="mt-4 space-y-3 border-t border-ink-800 pt-4">
+                <div>
+                  <div className="label mb-1.5">Marca</div>
+                  <select value={brandId} onChange={(e) => setBrandId(e.target.value)} className="input">
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.logo} {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <div className="label mb-1.5">
+                    {type === "channel"
+                      ? "Número / usuario del canal"
+                      : "Dominio o nombre de la tienda"}
+                  </div>
+                  <input
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder={
+                      type === "channel" ? "+54 9 11 5555-1234 o @miusuario" : "mitienda.com.ar"
+                    }
+                    className="input"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button disabled={!canSave} onClick={save} className="btn-primary mt-4 w-full">
+              Agregar {type === "channel" ? "canal" : "tienda"}
             </button>
           </>
         )}

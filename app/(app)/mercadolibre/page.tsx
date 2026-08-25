@@ -15,8 +15,8 @@ import {
   Users,
   Gift,
 } from "lucide-react";
-import { mlQuestions, leads } from "@/lib/mock-data";
 import { useApp, brandById } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { money, timeAgo, num } from "@/lib/format";
 import { StatCard, SectionTitle } from "@/components/ui";
 import type { MLQuestion } from "@/lib/types";
@@ -38,7 +38,9 @@ const suggestions = [
 
 export default function MercadoLibrePage() {
   const activeBrandId = useApp((s) => s.activeBrandId);
-  const [items, setItems] = useState(mlQuestions);
+  const items = useData((s) => s.mlQuestions);
+  const leads = useData((s) => s.leads);
+  const answerMl = useData((s) => s.answerMl);
   const [answering, setAnswering] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
 
@@ -49,7 +51,7 @@ export default function MercadoLibrePage() {
   );
 
   function answer(id: string) {
-    setItems((prev) => prev.map((q) => (q.id === id ? { ...q, answered: true } : q)));
+    answerMl(id);
     setAnswering(null);
     setDraft("");
   }

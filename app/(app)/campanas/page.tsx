@@ -16,10 +16,11 @@ import {
   Check,
   ChevronRight,
 } from "lucide-react";
-import { campaigns, leads } from "@/lib/mock-data";
 import { useApp, brandById } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { money, compactMoney, num, pct, shortDate } from "@/lib/format";
 import { StatCard, SectionTitle, Pill } from "@/components/ui";
+import { UserPlus } from "lucide-react";
 import type { Campaign, Lead } from "@/lib/types";
 
 const statusMeta: Record<Campaign["status"], { label: string; color: string; bg: string }> = {
@@ -39,7 +40,10 @@ const sourceLabels: Record<Lead["source"], string> = {
 
 export default function CampanasPage() {
   const activeBrandId = useApp((s) => s.activeBrandId);
+  const campaigns = useData((s) => s.campaigns);
+  const leads = useData((s) => s.leads);
   const [showNew, setShowNew] = useState(false);
+  const [showLead, setShowLead] = useState(false);
   const [tab, setTab] = useState<"campanas" | "leads">("campanas");
 
   const inBrandCampaigns =
@@ -81,7 +85,7 @@ export default function CampanasPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5">
+      <div className="flex items-center gap-1.5">
         {(["campanas", "leads"] as const).map((t) => (
           <button
             key={t}
@@ -95,6 +99,11 @@ export default function CampanasPage() {
             {t === "campanas" ? "Campañas" : `Base de leads (${inBrandLeads.length})`}
           </button>
         ))}
+        {tab === "leads" && (
+          <button onClick={() => setShowLead(true)} className="btn-soft ml-auto px-3 py-2 text-xs">
+            <UserPlus className="h-3.5 w-3.5" /> Agregar contacto
+          </button>
+        )}
       </div>
 
       {tab === "campanas" ? (
@@ -211,6 +220,14 @@ export default function CampanasPage() {
                     </tr>
                   );
                 })}
+                {inBrandLeads.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-10 text-center text-sm text-ink-400">
+                      Todavía no tenés contactos. Sumalos con “Agregar contacto”, desde el Lead
+                      Magnet de Mercado Libre o al recuperar carritos.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -218,6 +235,92 @@ export default function CampanasPage() {
       )}
 
       {showNew && <NewCampaignModal onClose={() => setShowNew(false)} leadsCount={inBrandLeads.length} />}
+      {showLead && <AddLeadModal onClose={() => setShowLead(false)} />}
+    </div>
+  );
+}
+
+function AddLeadModal({ onClose }: { onClose: () => void }) {
+  const brands = useData((s) => s.brands);
+  const addLead = useData((s) => s.addLead);
+  const activeBrandId = useApp((s) => s.activeBrandId);
+  const [brandId, setBrandId] = useState(activeBrandId !== "all" ? activeBrandId : brands[0]?.id ?? "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [consentEmail, setConsentEmail] = useState(true);
+  const [consentWhatsapp, setConsentWhatsapp] = useState(false);
+
+  function save() {
+    addLead({
+      brandId,
+      name,
+      email,
+      phone,
+      source: "manual",
+      tags: [],
+      consentEmail,
+      consentWhatsapp,
+    });
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="w-full max-w-md animate-fade-in rounded-t-3xl border border-ink-700 bg-ink-900 p-5 sm:rounded-2xl">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-white">Agregar contacto</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-800">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {brands.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-sm text-ink-300">Creá una marca antes de sumar contactos.</p>
+            <a href="/marcas" className="btn-primary mt-4 w-full">Crear una marca</a>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <div>
+              <div className="label mb-1.5">Marca</div>
+              <select value={brandId} onChange={(e) => setBrandId(e.target.value)} className="input">
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>{b.logo} {b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div className="label mb-1.5">Nombre</div>
+              <input value={name} onChange={(e) => setName(e.target.value)} className="input" placeholder="Nombre y apellido" />
+            </div>
+            <div>
+              <div className="label mb-1.5">Email</div>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} className="input" placeholder="cliente@mail.com" />
+            </div>
+            <div>
+              <div className="label mb-1.5">Teléfono (opcional)</div>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} className="input" placeholder="+54 9 11 ..." />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConsentEmail((v) => !v)}
+                className={`chip flex-1 justify-center border py-2 ${consentEmail ? "border-amber-500/40 bg-amber-500/10 text-amber-400" : "border-ink-700 bg-ink-850 text-ink-400"}`}
+              >
+                <Mail className="h-3.5 w-3.5" /> Acepta email
+              </button>
+              <button
+                onClick={() => setConsentWhatsapp((v) => !v)}
+                className={`chip flex-1 justify-center border py-2 ${consentWhatsapp ? "border-green-500/40 bg-green-500/10 text-green-400" : "border-ink-700 bg-ink-850 text-ink-400"}`}
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> Acepta WhatsApp
+              </button>
+            </div>
+            <button disabled={!email.trim() || !brandId} onClick={save} className="btn-primary w-full">
+              Guardar contacto
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -244,6 +347,9 @@ function Metric({
 }
 
 function NewCampaignModal({ onClose, leadsCount }: { onClose: () => void; leadsCount: number }) {
+  const addCampaign = useData((s) => s.addCampaign);
+  const brands = useData((s) => s.brands);
+  const activeBrandId = useApp((s) => s.activeBrandId);
   const [step, setStep] = useState(1);
   const [channel, setChannel] = useState<"email" | "whatsapp">("email");
   const [name, setName] = useState("");
@@ -255,6 +361,25 @@ function NewCampaignModal({ onClose, leadsCount }: { onClose: () => void; leadsC
     { label: "Carritos abandonados (7 días)", size: 128 },
     { label: "Compradores últimos 30 días", size: leadsCount * 180 },
   ];
+
+  function schedule() {
+    const size = audiences.find((a) => a.label === audience)?.size ?? 0;
+    addCampaign({
+      brandId: activeBrandId !== "all" ? activeBrandId : brands[0]?.id ?? "",
+      name: name || "Campaña sin título",
+      channel,
+      status: "programada",
+      audience,
+      audienceSize: size,
+      scheduledFor: new Date(Date.now() + 86400000).toISOString(),
+      sent: 0,
+      opened: 0,
+      clicked: 0,
+      converted: 0,
+      revenue: 0,
+    });
+    onClose();
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4">
@@ -379,7 +504,7 @@ function NewCampaignModal({ onClose, leadsCount }: { onClose: () => void; leadsC
               Continuar <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
-            <button onClick={onClose} className="btn-primary flex-1">
+            <button onClick={schedule} className="btn-primary flex-1">
               <Send className="h-4 w-4" /> Programar envío
             </button>
           )}

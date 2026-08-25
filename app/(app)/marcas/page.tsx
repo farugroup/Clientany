@@ -10,18 +10,27 @@ import {
   Store,
   MessageSquare,
   ArrowRight,
+  Pencil,
+  Trash2,
 } from "lucide-react";
-import { brands, channels, storeConnections, conversations } from "@/lib/mock-data";
 import { channelMeta, platformMeta } from "@/lib/channels";
 import { useApp } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { SectionTitle } from "@/components/ui";
+import type { Brand } from "@/lib/types";
 
 const emojis = ["🌙", "🧥", "🧉", "🏠", "👟", "💄", "🎁", "☕", "🍫", "🐾", "📚", "🌿"];
 const colors = ["#d946ef", "#3563ff", "#16a34a", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899"];
 
 export default function MarcasPage() {
   const setActiveBrand = useApp((s) => s.setActiveBrand);
+  const brands = useData((s) => s.brands);
+  const channels = useData((s) => s.channels);
+  const storeConnections = useData((s) => s.stores);
+  const conversations = useData((s) => s.conversations);
+  const removeBrand = useData((s) => s.removeBrand);
   const [showNew, setShowNew] = useState(false);
+  const [editBrand, setEditBrand] = useState<Brand | null>(null);
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 animate-fade-in">
@@ -108,14 +117,35 @@ export default function MarcasPage() {
                   ))}
                 </div>
 
-                <button
-                  onClick={() => {
-                    setActiveBrand(b.id);
-                  }}
-                  className="btn-ghost mt-4 w-full py-2 text-sm"
-                >
-                  Entrar a esta marca <ArrowRight className="h-4 w-4" />
-                </button>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => setActiveBrand(b.id)}
+                    className="btn-ghost flex-1 py-2 text-sm"
+                  >
+                    Entrar <ArrowRight className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setEditBrand(b)}
+                    className="btn-ghost px-3 py-2 text-sm"
+                    title="Editar"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `¿Eliminar la marca "${b.name}"? También se quitan sus canales y tiendas.`
+                        )
+                      )
+                        removeBrand(b.id);
+                    }}
+                    className="btn-ghost px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                    title="Eliminar"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -133,7 +163,8 @@ export default function MarcasPage() {
         </button>
       </div>
 
-      {showNew && <NewBrandModal onClose={() => setShowNew(false)} />}
+      {showNew && <BrandModal onClose={() => setShowNew(false)} />}
+      {editBrand && <BrandModal brand={editBrand} onClose={() => setEditBrand(null)} />}
     </div>
   );
 }
@@ -149,17 +180,48 @@ function MiniStat({ icon: Icon, value, label }: { icon: typeof Radio; value: num
   );
 }
 
-function NewBrandModal({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [emoji, setEmoji] = useState(emojis[0]);
-  const [color, setColor] = useState(colors[0]);
+const industries = [
+  "Moda & Indumentaria",
+  "Belleza & Skincare",
+  "Deco & Hogar",
+  "Tecnología",
+  "Alimentos & Bebidas",
+  "Salud & Bienestar",
+  "Otro",
+];
+
+function BrandModal({ brand, onClose }: { brand?: Brand; onClose: () => void }) {
+  const addBrand = useData((s) => s.addBrand);
+  const updateBrand = useData((s) => s.updateBrand);
+  const isEdit = !!brand;
+
+  const [name, setName] = useState(brand?.name ?? "");
+  const [emoji, setEmoji] = useState(brand?.logo ?? emojis[0]);
+  const [color, setColor] = useState(brand?.color ?? colors[0]);
+  const [industry, setIndustry] = useState(brand?.industry ?? industries[0]);
   const [done, setDone] = useState(false);
+
+  function save() {
+    if (isEdit && brand) {
+      updateBrand(brand.id, { name, logo: emoji, color, industry });
+      onClose();
+    } else {
+      addBrand({
+        name,
+        logo: emoji,
+        color,
+        industry,
+        handle: "@" + name.toLowerCase().replace(/\s+/g, ""),
+      });
+      setDone(true);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4">
       <div className="w-full max-w-md animate-fade-in rounded-t-3xl border border-ink-700 bg-ink-900 p-5 sm:rounded-2xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Nueva marca</h3>
+          <h3 className="text-lg font-bold text-white">{isEdit ? "Editar marca" : "Nueva marca"}</h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-800">
             <X className="h-5 w-5" />
           </button>
@@ -194,8 +256,18 @@ function NewBrandModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ej: Mi Tienda"
                   className="input"
+                  autoFocus
                 />
               </div>
+            </div>
+
+            <div>
+              <div className="label mb-1.5">Rubro</div>
+              <select value={industry} onChange={(e) => setIndustry(e.target.value)} className="input">
+                {industries.map((i) => (
+                  <option key={i}>{i}</option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -231,12 +303,8 @@ function NewBrandModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            <button
-              onClick={() => setDone(true)}
-              disabled={!name.trim()}
-              className="btn-primary w-full"
-            >
-              Crear marca
+            <button onClick={save} disabled={!name.trim()} className="btn-primary w-full">
+              {isEdit ? "Guardar cambios" : "Crear marca"}
             </button>
           </div>
         )}

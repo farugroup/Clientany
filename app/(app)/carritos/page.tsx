@@ -13,9 +13,9 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
-import { abandonedCarts } from "@/lib/mock-data";
 import { platformMeta, channelMeta } from "@/lib/channels";
 import { useApp, brandById } from "@/lib/store";
+import { useData } from "@/lib/data-store";
 import { money, compactMoney, timeAgo, pct } from "@/lib/format";
 import { StatCard, SectionTitle, Pill } from "@/components/ui";
 import type { AbandonedCart } from "@/lib/types";
@@ -38,7 +38,8 @@ const flowSteps = [
 
 export default function CarritosPage() {
   const activeBrandId = useApp((s) => s.activeBrandId);
-  const [carts, setCarts] = useState(abandonedCarts);
+  const carts = useData((s) => s.carts);
+  const updateCart = useData((s) => s.updateCart);
   const [filter, setFilter] = useState<"todos" | AbandonedCart["recoveryStatus"]>("todos");
   const [modalCart, setModalCart] = useState<AbandonedCart | null>(null);
 
@@ -54,9 +55,7 @@ export default function CarritosPage() {
   const recoveryRate = pct(recovered.length, inBrand.length);
 
   function markContacted(id: string) {
-    setCarts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, recoveryStatus: "contactado" } : c))
-    );
+    updateCart(id, { recoveryStatus: "contactado" });
     setModalCart(null);
   }
 
@@ -178,6 +177,18 @@ export default function CarritosPage() {
                       </span>
                     ) : c.recoveryStatus === "perdido" ? (
                       <span className="text-xs text-ink-500">Sin respuesta</span>
+                    ) : c.recoveryStatus === "contactado" ? (
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => updateCart(c.id, { recoveryStatus: "recuperado" })}
+                          className="btn-soft px-3 py-1.5 text-xs"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Recuperado
+                        </button>
+                        <button onClick={() => setModalCart(c)} className="btn-ghost px-3 py-1.5 text-xs">
+                          <Send className="h-3.5 w-3.5" /> Reenviar
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => setModalCart(c)}
