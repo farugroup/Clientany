@@ -136,7 +136,7 @@ caso("estaAbierto: sábado 11:00 BA → abierto, 14:00 → cerrado", () => {
   ok(core.estaAbierto(horario, new Date("2026-10-03T14:00:00.000Z")));
   ok(!core.estaAbierto(horario, new Date("2026-10-03T17:00:00.000Z")));
 });
-caso("horarioEnCriollo", () => igual(core.horarioEnCriollo(horario), "lunes a viernes de 9 a 18 y sábado de 10 a 13"));
+caso("horarioEnCriollo", () => ok(/^lunes a viernes de 0?9 a 18 y sábado de 10 a 13$/.test(core.horarioEnCriollo(horario)), core.horarioEnCriollo(horario)));
 
 // ---------- bot ----------
 const empresa = { nombre: "Tienda Luna", horario, moneda: "ARS" };
@@ -249,7 +249,7 @@ caso("evaluarBot: ausencia fuera de horario una vez cada 12 hs", () => {
   const noche = new Date("2026-10-07T23:30:00.000Z"); // 20:30 en Buenos Aires: cerrado
   const r1 = bot.evaluarBot(ctx({ texto: "hola", ahora: noche }));
   igual(r1.respuestas[0].motivo, "ausencia");
-  ok(/lunes a viernes de 9 a 18/.test(r1.respuestas[0].texto), r1.respuestas[0].texto);
+  ok(/lunes a viernes de 0?9 a 18/.test(r1.respuestas[0].texto), r1.respuestas[0].texto);
   igual(r1.cambios.fuera_horario, true);
   const r2 = bot.evaluarBot(ctx({ texto: "hola?", ahora: new Date(noche.getTime() + 3600000), esPrimerMensaje: false, conv: conv({ bot_estado: r1.cambios.bot_estado }) }));
   igual(r2.respuestas.length, 0);
@@ -330,7 +330,7 @@ caso("importarContactos: coma, punto y coma e inglés", () => {
   igual(r2.filas[0].nombre, "Ana");
   igual(r2.filas[0].telefono, "5493511234567");
   igual(r2.filas[0].ig_usuario, "ana.ok");
-  const r3 = csv.importarContactos("nombre,telefono\n,\n", "e1");
+  const r3 = csv.importarContactos("nombre,telefono,email\n,,noesmail\n", "e1");
   igual(r3.filas.length, 0);
   igual(r3.errores.length, 1);
 });

@@ -72,7 +72,8 @@ export default function PanelPage() {
 
   const hayDatos = !!datos && (datos.conversaciones.total > 0 || datos.stock.productos > 0 || pedidos.length > 0);
   const moneda = datos?.pedidos.moneda || empresa?.moneda || "ARS";
-  const primerNombre = (yo?.nombre || "").split(" ")[0];
+  const nombreYo = (yo?.nombre || "").split(" ")[0];
+  const primerNombre = nombreYo.toLowerCase() === "vos" ? "" : nombreYo;
   const pruebaHasta =
     empresa?.plan === "prueba" && empresa.prueba_hasta
       ? new Date(empresa.prueba_hasta).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })
@@ -139,7 +140,11 @@ export default function PanelPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <Link href="/inbox" className="block rounded-2xl transition hover:ring-1 hover:ring-brand-500/40" aria-label="Ir a la bandeja">
+            <Link
+              href="/inbox"
+              className="block h-full rounded-2xl transition hover:ring-1 hover:ring-brand-500/40 [&>div]:h-full"
+              aria-label="Ir a la bandeja"
+            >
               <StatCard
                 label="Sin responder"
                 value={n(sinResponder)}
@@ -161,7 +166,7 @@ export default function PanelPage() {
               value={n(datos.bot.respuestas_hoy)}
               icon={Bot}
               accent="#8b5cf6"
-              sub={`${n(datos.bot.respuestas_mes)} en el mes · ${n(datos.bot.derivadas_a_humano)} pasadas a una persona`}
+              sub={`${n(datos.bot.respuestas_mes)} en el mes · ${n(datos.bot.derivadas_a_humano)} a una persona`}
             />
             <StatCard
               label="Pedidos del mes"
@@ -170,7 +175,7 @@ export default function PanelPage() {
               accent="#16a34a"
               sub={`${dinero(datos.pedidos.monto_mes, moneda)} · ${n(datos.pedidos.hoy)} hoy`}
             />
-            <Link href="/stock" className="block rounded-2xl transition hover:ring-1 hover:ring-brand-500/40" aria-label="Ir a stock">
+            <Link href="/stock" className="block h-full rounded-2xl transition hover:ring-1 hover:ring-brand-500/40 [&>div]:h-full" aria-label="Ir a stock">
               <StatCard
                 label="Sin stock"
                 value={n(datos.stock.sin_stock)}

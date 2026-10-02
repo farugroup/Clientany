@@ -44,6 +44,14 @@ function dentroDeRango(iso: string, rango: Rango, ahora: Date): boolean {
 
 const PASO = 50;
 
+// "02 oct" (y el año si no es el actual): corta para que la tabla entre.
+function fechaTabla(iso: string, ahora: Date): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "sin dato";
+  const corta = d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" }).replace(/[-.]/g, " ").replace(/\s+/g, " ").trim();
+  return d.getFullYear() === ahora.getFullYear() ? corta : `${corta} ${d.getFullYear()}`;
+}
+
 export default function PedidosPage() {
   const empresa = useEmpresa();
   const marca = useMarcaActiva();
@@ -178,12 +186,12 @@ export default function PedidosPage() {
               </button>
             )}
           </div>
-          <div className="flex shrink-0 gap-1 rounded-xl border border-ink-700 bg-ink-850 p-1">
+          <div className="flex shrink-0 gap-1 rounded-xl border border-ink-700 bg-ink-850 p-1" role="group" aria-label="Rango de fechas">
             {RANGOS.map((r) => (
               <button
                 key={r.id}
                 onClick={() => setRango(r.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition md:flex-none ${
                   rango === r.id ? "bg-brand-500 text-white" : "text-ink-300 hover:text-white"
                 }`}
               >
@@ -267,26 +275,31 @@ export default function PedidosPage() {
                   <Th className="text-right">Total</Th>
                   <Th>Estado</Th>
                   <Th>Envío</Th>
-                  <Th>Canal</Th>
+                  <Th className="hidden 2xl:table-cell">Canal</Th>
                 </tr>
               </thead>
               <tbody>
                 {visibles.map((p) => (
                   <tr key={p.id} className="cursor-pointer transition hover:bg-ink-800/40" onClick={() => setDetalle(p.id)}>
-                    <Td className="whitespace-nowrap font-mono text-xs font-semibold text-white">{p.numero}</Td>
-                    <Td className="whitespace-nowrap text-xs text-ink-300">{fechaCorta(p.creado)}</Td>
-                    <Td>
-                      <div className="max-w-[180px] truncate font-medium text-white">{p.nombre}</div>
-                      {p.telefono && <div className="text-xs text-ink-400">{telefonoLindo(p.telefono)}</div>}
+                    <Td className="whitespace-nowrap">
+                      <div className="font-mono text-xs font-semibold text-white">{p.numero}</div>
+                      <div className="text-[10px] text-ink-500 2xl:hidden">{nombreCanalVenta(p.canal)}</div>
                     </Td>
-                    <Td className="max-w-[220px] truncate text-xs text-ink-300">
+                    <Td className="whitespace-nowrap text-xs text-ink-300">
+                      <span title={fechaCorta(p.creado)}>{fechaTabla(p.creado, ahora)}</span>
+                    </Td>
+                    <Td>
+                      <div className="max-w-[170px] truncate font-medium text-white">{p.nombre}</div>
+                      {p.telefono && <div className="whitespace-nowrap text-xs text-ink-400">{telefonoLindo(p.telefono)}</div>}
+                    </Td>
+                    <Td className="w-full max-w-0 truncate text-xs text-ink-300">
                       {resumenItems(p.items, 48) || <span className="text-ink-500">sin detalle</span>}
                     </Td>
                     <Td className="whitespace-nowrap text-right font-mono text-xs font-semibold text-white">{dinero(p.total, p.moneda || moneda)}</Td>
                     <Td>
                       <SelectorEstado valor={p.estado} onCambio={(e) => cambiarEstadoPedido(p, e)} />
                     </Td>
-                    <Td className="text-xs">
+                    <Td className="whitespace-nowrap text-xs">
                       {p.envio?.transporte || p.envio?.seguimiento ? (
                         <>
                           <div className="text-ink-200">{p.envio?.transporte || "sin transporte"}</div>
@@ -309,7 +322,7 @@ export default function PedidosPage() {
                         <span className="text-ink-500">sin dato</span>
                       )}
                     </Td>
-                    <Td>
+                    <Td className="hidden 2xl:table-cell">
                       <span className="chip whitespace-nowrap bg-ink-800 text-ink-300">{nombreCanalVenta(p.canal)}</span>
                     </Td>
                   </tr>

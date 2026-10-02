@@ -242,7 +242,7 @@ export function SeccionHorario({ empresa, ro }: { empresa: Empresa; ro: boolean 
                 <span className="flex items-center gap-2 text-xs text-ink-400">
                   <input
                     type="time"
-                    className={`input w-[118px] px-3 py-1.5 font-mono ${malos.includes(d.dia) ? "border-red-500/60" : ""}`}
+                    className={`input w-[140px] px-3 py-1.5 font-mono ${malos.includes(d.dia) ? "border-red-500/60" : ""}`}
                     value={d.desde}
                     onChange={(e) => setDia(d.dia, { desde: e.target.value })}
                     aria-label={`${NOMBRE_DIA[d.dia]}: desde`}
@@ -250,7 +250,7 @@ export function SeccionHorario({ empresa, ro }: { empresa: Empresa; ro: boolean 
                   a
                   <input
                     type="time"
-                    className={`input w-[118px] px-3 py-1.5 font-mono ${malos.includes(d.dia) ? "border-red-500/60" : ""}`}
+                    className={`input w-[140px] px-3 py-1.5 font-mono ${malos.includes(d.dia) ? "border-red-500/60" : ""}`}
                     value={d.hasta}
                     onChange={(e) => setDia(d.dia, { hasta: e.target.value })}
                     aria-label={`${NOMBRE_DIA[d.dia]}: hasta`}
