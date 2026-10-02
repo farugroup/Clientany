@@ -54,6 +54,27 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   const fila = () => page.getByRole("button", { name: /Sofía|Mica|Juan|Valentina|Tomás|Flor|Lucas|Rocío|Lucía|Camila|Cliente/ }).first();
   const caja = () => page.getByRole("textbox", { name: /^Mensaje$/ });
 
+  // ======================= PREPARACIÓN (modo nube) =======================
+  if (modo === "nube") {
+    await paso("Nube: cargar datos de ejemplo por la API y completar el alta", async () => {
+      const r = await page.request.post(base + "/api/crm/demo");
+      if (!r.ok()) throw new Error("POST /api/crm/demo → " + r.status());
+      await ir("/panel");
+      const alta = page.getByPlaceholder(/Mi Tienda Online/);
+      if (await alta.isVisible().catch(() => false)) {
+        await alta.fill("Empresa de prueba");
+        await page.getByPlaceholder(/Nombre y apellido/).first().fill("Dev Prueba");
+        await page.getByPlaceholder(/hola@tunegocio/).fill("dev@clientany.com");
+        await page.getByRole("button", { name: /Continuar/ }).click();
+        await page.getByText(/Empezar de cero/).first().click();
+        await esperar(400);
+        const seguir = page.getByRole("button", { name: /Continuar|Crear|Listo|Empezar/ }).first();
+        if (await seguir.isVisible().catch(() => false)) await seguir.click();
+        await esperar(600);
+      }
+    });
+  }
+
   // ======================= BANDEJA =======================
   await ir("/inbox");
   await paso("Bandeja: la lista tiene chats", async () => {
@@ -266,21 +287,21 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
     await q.fill("");
   });
   await paso("Clientes: nuevo cliente", async () => {
-    await page.getByRole("button", { name: /^Nuevo cliente$/ }).click();
+    await page.getByRole("button", { name: /^Nuevo cliente$/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.getByPlaceholder(/Nombre y apellido/).fill("Ramiro Prueba");
     await dlg.getByPlaceholder(/5555-1234/).fill("11 2222-3333");
     await dlg.getByRole("button", { name: /Guardar|Crear/ }).last().click();
     await page.getByText("Ramiro Prueba").first().waitFor();
     // se abre la ficha del cliente nuevo: se cierra para seguir con la tabla
-    const cerrar = page.getByRole("button", { name: /^Cerrar( la ficha)?$/ }).last();
+    const cerrar = page.getByRole("button", { name: "Cerrar", exact: true }).first();
     if (await cerrar.isVisible().catch(() => false)) await cerrar.click();
     else await page.keyboard.press("Escape");
     await esperar(300);
   });
   await paso("Clientes: importar CSV con vista previa", async () => {
     const csv = csvTemporal(salida, "clientes.csv", "nombre,telefono,email,localidad\nAna Import,11 5000-1111,ana@import.com,Rosario\nLuis Import,11 5000-2222,luis@import.com,Córdoba\n");
-    await page.getByRole("button", { name: /^Importar CSV$/ }).click();
+    await page.getByRole("button", { name: /^Importar CSV$/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.waitFor();
     await dlg.locator("input[type=file]").setInputFiles(csv);
@@ -290,7 +311,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   });
   await paso("Clientes: exportar CSV descarga", async () => {
     const d = page.waitForEvent("download", { timeout: 8000 }).catch(() => null);
-    await page.getByRole("button", { name: /^Exportar CSV$/ }).click();
+    await page.getByRole("button", { name: /^Exportar CSV$/ }).first().click();
     if (!(await d)) throw new Error("no descargó");
   });
   await limpiar(page);
@@ -299,7 +320,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   await ir("/pedidos");
   const numeroPedido = "T-" + Date.now().toString().slice(-5);
   await paso("Pedidos: nuevo pedido con un ítem del stock", async () => {
-    await page.getByRole("button", { name: /^Nuevo pedido$/ }).click();
+    await page.getByRole("button", { name: /^Nuevo pedido$/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.waitFor();
     await dlg.getByPlaceholder(/#1234/).fill(numeroPedido);
@@ -309,10 +330,12 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
     await dlg.getByPlaceholder(/^Precio$/).first().fill("1500");
     await dlg.getByRole("button", { name: /Cargar pedido|Guardar/ }).click();
     await page.getByText(numeroPedido).first().waitFor();
+    await limpiar(page); // se abre el detalle del pedido nuevo: se cierra para seguir con la tabla
   });
   await paso("Pedidos: cambiar el estado desde la fila", async () => {
     await page.getByRole("combobox", { name: /Cambiar el estado del pedido/ }).first().selectOption("enviado");
     await esperar(400);
+    if (await page.getByRole("dialog").isVisible().catch(() => false)) throw new Error("cambiar el estado abrió el detalle del pedido");
   });
   await paso("Pedidos: filtro por estado y «Mostrando N de M»", async () => {
     await page.getByRole("button", { name: /^Entregado/ }).first().click();
@@ -321,7 +344,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   });
   await paso("Pedidos: importar CSV", async () => {
     const csv = csvTemporal(salida, "pedidos.csv", "numero;nombre;telefono;estado;total;productos\nIMP-1;Ana Import;11 5000-1111;pagado;12.500;2x Crema\nIMP-2;Luis Import;11 5000-2222;enviado;8.000;1x Sérum\n");
-    await page.getByRole("button", { name: /^Importar CSV$/ }).click();
+    await page.getByRole("button", { name: /^Importar CSV$/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.waitFor();
     await dlg.locator("input[type=file]").setInputFiles(csv);
@@ -331,7 +354,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   });
   await paso("Pedidos: exportar CSV", async () => {
     const d = page.waitForEvent("download", { timeout: 8000 }).catch(() => null);
-    await page.getByRole("button", { name: /^Exportar CSV$/ }).click();
+    await page.getByRole("button", { name: /^Exportar CSV$/ }).first().click();
     if (!(await d)) throw new Error("no descargó");
   });
   await limpiar(page);
@@ -340,7 +363,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   // ======================= STOCK =======================
   await ir("/stock");
   await paso("Stock: nuevo producto", async () => {
-    await page.getByRole("button", { name: /^Nuevo producto$/ }).click();
+    await page.getByRole("button", { name: /^Nuevo producto$/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.waitFor();
     await dlg.getByPlaceholder(/MAN-5KG/).fill("PRB-1");
@@ -364,7 +387,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   });
   await paso("Stock: importar CSV", async () => {
     const csv = csvTemporal(salida, "stock.csv", "sku,nombre,precio,stock,categoria\nIMP-A,Crema importada,5000,12,Cremas\nIMP-B,Gel importado,3000,0,Geles\n");
-    await page.getByRole("button", { name: /^Importar CSV$/ }).click();
+    await page.getByRole("button", { name: /^Importar CSV$/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.waitFor();
     await dlg.locator("input[type=file]").setInputFiles(csv);
@@ -401,7 +424,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
     await page.getByText(/aprobada/i).first().waitFor({ timeout: 8000 });
   });
   await paso("Plantillas: nueva plantilla local", async () => {
-    await page.getByRole("button", { name: /^Nueva plantilla local$/ }).click();
+    await page.getByRole("button", { name: /^Nueva plantilla local$/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.getByPlaceholder(/pedido_enviado/).fill("prueba_local");
     await dlg.getByPlaceholder(/tu pedido \{\{2\}\}/).fill("Hola {{1}}, tu pedido {{2}} ya salió.");
