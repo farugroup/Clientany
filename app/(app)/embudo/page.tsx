@@ -1,423 +1,233 @@
 "use client";
+// ============================================================
+// Clientany · Embudo (/embudo) — kanban por etapa: una columna por etapa
+// de la empresa, tarjetas = conversaciones con etapa, arrastrar y soltar
+// entre columnas (en el celular, un desplegable en la tarjeta).
+// ============================================================
+import { useMemo, useState, type DragEvent as RDragEvent } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronUp, Filter, Package } from "lucide-react";
+import { avisar, ChipColor, Encabezado, Vacio } from "@/components/crm/ui";
+import { haceCuanto, recortar } from "@/lib/crm/core";
+import { getRepo, useCrm } from "@/lib/crm/repo";
+import { useEmpresa, useMarcaActiva, usePedidos } from "@/lib/crm/hooks";
+import type { Conversacion, Etapa } from "@/lib/crm/types";
+import { Avatar, canalMeta, etiquetasDe, useEsCelular } from "@/components/crm/bandeja/comun";
 
-import { useState } from "react";
-import {
-  Filter,
-  Plus,
-  X,
-  DollarSign,
-  Target,
-  TrendingUp,
-  Trophy,
-  CheckSquare,
-  Square,
-  MessageSquarePlus,
-  ListPlus,
-  Trash2,
-  GripVertical,
-  Calendar,
-} from "lucide-react";
-import { useData } from "@/lib/data-store";
-import { useApp, brandById } from "@/lib/store";
-import { money, compactMoney, timeAgo, num, pct } from "@/lib/format";
-import { channelMeta } from "@/lib/channels";
-import { StatCard } from "@/components/ui";
-import type { Deal } from "@/lib/types";
+const SIN_ETAPA = "__sin_etapa__";
 
 export default function EmbudoPage() {
-  const activeBrandId = useApp((s) => s.activeBrandId);
-  const stages = useData((s) => s.pipelineStages);
-  const deals = useData((s) => s.deals);
-  const agents = useData((s) => s.agents);
-  const moveDeal = useData((s) => s.moveDeal);
-  const [openDeal, setOpenDeal] = useState<string | null>(null);
-  const [showNew, setShowNew] = useState(false);
-  const [dragId, setDragId] = useState<string | null>(null);
+  const empresa = useEmpresa();
+  const listo = useCrm((s) => s.listo);
+  const convs = useCrm((s) => s.conversaciones);
+  const marca = useMarcaActiva();
+  const pedidos = usePedidos();
+  const esCelular = useEsCelular() === true;
+  const router = useRouter();
+  const [verSin, setVerSin] = useState(false);
+  const [arrastrando, setArrastrando] = useState<string | null>(null);
+  const [sobre, setSobre] = useState<string | null>(null);
 
-  const myDeals = activeBrandId === "all" ? deals : deals.filter((d) => d.brandId === activeBrandId);
-  const openStages = stages.filter((s) => s.id !== "st_perdido");
-  const won = myDeals.filter((d) => d.stageId === "st_ganado");
-  const lost = myDeals.filter((d) => d.stageId === "st_perdido");
-  const active = myDeals.filter((d) => d.stageId !== "st_ganado" && d.stageId !== "st_perdido");
-  const pipelineValue = active.reduce((s, d) => s + d.value, 0);
-  const wonValue = won.reduce((s, d) => s + d.value, 0);
-  const winRate = pct(won.length, won.length + lost.length);
-
-  const dealsInStage = (stageId: string) => myDeals.filter((d) => d.stageId === stageId);
-  const selected = deals.find((d) => d.id === openDeal) ?? null;
-
-  return (
-    <div className="mx-auto max-w-[1400px] space-y-5 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15">
-            <Filter className="h-6 w-6 text-brand-300" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Embudo de ventas</h2>
-            <p className="mt-0.5 text-sm text-ink-400">
-              Arrastrá cada oportunidad por las etapas y no se te escapa ninguna venta.
-            </p>
-          </div>
-        </div>
-        <button onClick={() => setShowNew(true)} className="btn-primary shrink-0">
-          <Plus className="h-4 w-4" /> Nueva oportunidad
-        </button>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Oportunidades activas" value={num(active.length)} icon={Target} accent="#3563ff" />
-        <StatCard label="Valor del embudo" value={compactMoney(pipelineValue)} icon={DollarSign} accent="#f59e0b" />
-        <StatCard label="Ganado (mes)" value={compactMoney(wonValue)} icon={Trophy} accent="#16a34a" sub={`${won.length} cerradas`} />
-        <StatCard label="Tasa de conversión" value={winRate} icon={TrendingUp} accent="#d946ef" />
-      </div>
-
-      {/* Kanban */}
-      <div className="no-scrollbar overflow-x-auto pb-2">
-        <div className="flex gap-3" style={{ minWidth: "min-content" }}>
-          {stages.map((stage) => {
-            const stageDeals = dealsInStage(stage.id);
-            const stageValue = stageDeals.reduce((s, d) => s + d.value, 0);
-            return (
-              <div
-                key={stage.id}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => {
-                  if (dragId) moveDeal(dragId, stage.id);
-                  setDragId(null);
-                }}
-                className="flex w-[280px] shrink-0 flex-col rounded-2xl border border-ink-800 bg-ink-900/50"
-              >
-                <div className="flex items-center justify-between border-b border-ink-800 p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: stage.color }} />
-                    <span className="text-sm font-semibold text-white">{stage.name}</span>
-                    <span className="chip bg-ink-800 text-ink-300">{stageDeals.length}</span>
-                  </div>
-                  <span className="text-xs font-medium text-ink-400">{compactMoney(stageValue)}</span>
-                </div>
-                <div className="no-scrollbar flex-1 space-y-2 overflow-y-auto p-2" style={{ maxHeight: "60vh" }}>
-                  {stageDeals.map((d) => {
-                    const brand = brandById(d.brandId);
-                    const agent = agents.find((a) => a.id === d.responsible);
-                    const ch = channelMeta[d.channel];
-                    const openTasks = d.tasks.filter((t) => !t.done).length;
-                    return (
-                      <div
-                        key={d.id}
-                        draggable
-                        onDragStart={() => setDragId(d.id)}
-                        onDragEnd={() => setDragId(null)}
-                        onClick={() => setOpenDeal(d.id)}
-                        className={`group cursor-pointer rounded-xl border border-ink-700 bg-ink-850 p-3 transition hover:border-brand-500/40 ${
-                          dragId === d.id ? "opacity-50" : ""
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="text-sm font-semibold text-white">{d.title}</span>
-                          <GripVertical className="h-4 w-4 shrink-0 text-ink-600 opacity-0 group-hover:opacity-100" />
-                        </div>
-                        <div className="mt-1 text-xs text-ink-400">{d.contactName}</div>
-                        <div className="mt-2 text-base font-bold text-white">{money(d.value, d.currency)}</div>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <span
-                            className="flex h-5 items-center gap-1 rounded-full px-1.5 text-[10px]"
-                            style={{ background: ch.bg, color: ch.color }}
-                          >
-                            <ch.icon className="h-3 w-3" /> {ch.label}
-                          </span>
-                          {activeBrandId === "all" && (
-                            <span className="chip bg-ink-800 text-[10px] text-ink-300">{brand?.logo}</span>
-                          )}
-                          {openTasks > 0 && (
-                            <span className="chip bg-amber-500/10 text-[10px] text-amber-400">
-                              <CheckSquare className="h-2.5 w-2.5" /> {openTasks}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-2 flex items-center justify-between border-t border-ink-800 pt-2">
-                          <span className="flex items-center gap-1 text-[11px] text-ink-400">
-                            <span>{agent?.avatar}</span> {agent?.name.split(" ")[0]}
-                          </span>
-                          <span className="text-[10px] text-ink-500">{timeAgo(d.createdAt)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {stageDeals.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-ink-700 py-6 text-center text-xs text-ink-600">
-                      Arrastrá acá
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <p className="text-xs text-ink-500">
-        💡 En desktop arrastrás las tarjetas entre columnas. En mobile, tocá una oportunidad y usá
-        “Mover de etapa”.
-      </p>
-
-      {selected && <DealDrawer deal={selected} onClose={() => setOpenDeal(null)} />}
-      {showNew && <NewDealModal onClose={() => setShowNew(false)} />}
-    </div>
+  const etapas = useMemo(() => [...(empresa?.etapas || [])].sort((a, b) => a.orden - b.orden), [empresa]);
+  const visibles = useMemo(
+    () => convs.filter((c) => marca === "all" || !marca || !c.marca_id || c.marca_id === marca),
+    [convs, marca]
   );
-}
+  const porEtapa = useMemo(() => {
+    const m = new Map<string, Conversacion[]>();
+    etapas.forEach((e) => m.set(e.id, []));
+    const sin: Conversacion[] = [];
+    for (const c of visibles) {
+      if (c.etapa_id && m.has(c.etapa_id)) m.get(c.etapa_id)!.push(c);
+      else sin.push(c);
+    }
+    const orden = (a: Conversacion, b: Conversacion) => new Date(b.ultimo_en).getTime() - new Date(a.ultimo_en).getTime();
+    m.forEach((lista) => lista.sort(orden));
+    sin.sort(orden);
+    return { m, sin };
+  }, [visibles, etapas]);
+  const conEtapa = visibles.length - porEtapa.sin.length;
 
-function DealDrawer({ deal, onClose }: { deal: Deal; onClose: () => void }) {
-  const stages = useData((s) => s.pipelineStages);
-  const agents = useData((s) => s.agents);
-  const moveDeal = useData((s) => s.moveDeal);
-  const removeDeal = useData((s) => s.removeDeal);
-  const addDealNote = useData((s) => s.addDealNote);
-  const addDealTask = useData((s) => s.addDealTask);
-  const toggleDealTask = useData((s) => s.toggleDealTask);
-  const [note, setNote] = useState("");
-  const [task, setTask] = useState("");
-  const brand = brandById(deal.brandId);
-  const agent = agents.find((a) => a.id === deal.responsible);
-  const stage = stages.find((s) => s.id === deal.stageId);
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
-      <div className="h-full w-full max-w-md animate-fade-in overflow-y-auto border-l border-ink-700 bg-ink-900 p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: stage?.color }} />
-              <span className="text-xs font-medium text-ink-400">{stage?.name}</span>
-            </div>
-            <h3 className="mt-1 text-lg font-bold text-white">{deal.title}</h3>
-            <p className="text-sm text-ink-400">{deal.contactName} · {deal.contactHandle}</p>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-800">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="mt-4 rounded-xl bg-ink-850 p-3">
-          <div className="text-2xl font-extrabold text-white">{money(deal.value, deal.currency)}</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-            <Info label="Responsable" value={`${agent?.avatar ?? ""} ${agent?.name ?? "-"}`} />
-            <Info label="Origen" value={deal.source} />
-            <Info label="Marca" value={`${brand?.logo ?? ""} ${brand?.name ?? ""}`} />
-            <Info label="Creado" value={timeAgo(deal.createdAt)} />
-          </div>
-        </div>
-
-        {/* Move stage */}
-        <div className="mt-4">
-          <div className="label mb-1.5">Mover de etapa</div>
-          <select
-            value={deal.stageId}
-            onChange={(e) => moveDeal(deal.id, e.target.value)}
-            className="input"
-          >
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Tasks */}
-        <div className="mt-5">
-          <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white">
-            <CheckSquare className="h-4 w-4 text-brand-300" /> Tareas
-          </div>
-          <div className="space-y-1.5">
-            {deal.tasks.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => toggleDealTask(deal.id, t.id)}
-                className="flex w-full items-center gap-2 rounded-lg bg-ink-850 p-2 text-left"
-              >
-                {t.done ? (
-                  <CheckSquare className="h-4 w-4 shrink-0 text-green-400" />
-                ) : (
-                  <Square className="h-4 w-4 shrink-0 text-ink-500" />
-                )}
-                <span className={`flex-1 text-sm ${t.done ? "text-ink-500 line-through" : "text-ink-200"}`}>
-                  {t.text}
-                </span>
-                <span className="flex items-center gap-1 text-[10px] text-ink-500">
-                  <Calendar className="h-3 w-3" /> {timeAgo(t.due)}
-                </span>
-              </button>
-            ))}
-            {deal.tasks.length === 0 && <div className="text-xs text-ink-500">Sin tareas.</div>}
-          </div>
-          <div className="mt-2 flex gap-2">
-            <input
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              placeholder="Nueva tarea…"
-              className="input py-2 text-sm"
-            />
-            <button
-              onClick={() => {
-                if (task.trim()) {
-                  addDealTask(deal.id, task.trim(), new Date(Date.now() + 86400000).toISOString());
-                  setTask("");
-                }
-              }}
-              className="btn-ghost px-3 py-2"
-            >
-              <ListPlus className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div className="mt-5">
-          <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white">
-            <MessageSquarePlus className="h-4 w-4 text-brand-300" /> Notas
-          </div>
-          <div className="space-y-1.5">
-            {deal.notes.map((n) => (
-              <div key={n.id} className="rounded-lg bg-ink-850 p-2 text-sm text-ink-200">
-                {n.text}
-                <div className="mt-0.5 text-[10px] text-ink-500">{timeAgo(n.at)}</div>
-              </div>
-            ))}
-            {deal.notes.length === 0 && <div className="text-xs text-ink-500">Sin notas.</div>}
-          </div>
-          <div className="mt-2 flex gap-2">
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Agregar nota…"
-              className="input py-2 text-sm"
-            />
-            <button
-              onClick={() => {
-                if (note.trim()) {
-                  addDealNote(deal.id, note.trim());
-                  setNote("");
-                }
-              }}
-              className="btn-ghost px-3 py-2"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        <button
-          onClick={() => {
-            if (confirm("¿Eliminar esta oportunidad?")) {
-              removeDeal(deal.id);
-              onClose();
-            }
-          }}
-          className="btn-ghost mt-6 w-full py-2 text-sm text-red-400 hover:bg-red-500/10"
-        >
-          <Trash2 className="h-4 w-4" /> Eliminar oportunidad
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[10px] uppercase text-ink-500">{label}</div>
-      <div className="truncate text-ink-200">{value}</div>
-    </div>
-  );
-}
-
-function NewDealModal({ onClose }: { onClose: () => void }) {
-  const brands = useData((s) => s.brands);
-  const stages = useData((s) => s.pipelineStages);
-  const agents = useData((s) => s.agents);
-  const addDeal = useData((s) => s.addDeal);
-  const activeBrandId = useApp((s) => s.activeBrandId);
-
-  const [title, setTitle] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [value, setValue] = useState("");
-  const [brandId, setBrandId] = useState(activeBrandId !== "all" ? activeBrandId : brands[0]?.id ?? "");
-  const [stageId, setStageId] = useState(stages[0]?.id ?? "");
-  const [responsible, setResponsible] = useState(agents[0]?.id ?? "");
-
-  const canSave = title.trim() && brandId;
-
-  function save() {
-    addDeal({
-      brandId,
-      title,
-      contactName,
-      contactHandle: "",
-      channel: "whatsapp",
-      value: Number(value.replace(/[^\d]/g, "")) || 0,
-      currency: "ARS",
-      stageId,
-      responsible,
-      source: "Manual",
-      tags: [],
-    });
-    onClose();
+  async function mover(id: string, etapaId: string | null) {
+    const c = convs.find((x) => x.id === id);
+    if (!c || (c.etapa_id || null) === etapaId) return;
+    try {
+      await getRepo().accion(id, { tipo: "etapa", etapa_id: etapaId });
+      const nombre = etapaId ? etapas.find((e) => e.id === etapaId)?.nombre : null;
+      avisar(nombre ? `${c.nombre} → ${nombre}` : `${c.nombre} sin etapa`);
+    } catch (e) {
+      avisar(e, "error");
+    }
   }
 
+  function onDragOver(e: RDragEvent<HTMLDivElement>, col: string) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (sobre !== col) setSobre(col);
+  }
+  function onDrop(e: RDragEvent<HTMLDivElement>, col: string) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/plain") || arrastrando;
+    setSobre(null);
+    setArrastrando(null);
+    if (id) mover(id, col === SIN_ETAPA ? null : col);
+  }
+
+  const columnas: { id: string; nombre: string; color: string; lista: Conversacion[] }[] = [
+    ...(verSin ? [{ id: SIN_ETAPA, nombre: "Sin etapa", color: "#6b769a", lista: porEtapa.sin }] : []),
+    ...etapas.map((e) => ({ id: e.id, nombre: e.nombre, color: e.color, lista: porEtapa.m.get(e.id) || [] })),
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="w-full max-w-md animate-fade-in rounded-t-3xl border border-ink-700 bg-ink-900 p-5 sm:rounded-2xl">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Nueva oportunidad</h3>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-800">
-            <X className="h-5 w-5" />
+    <div className="mx-auto max-w-[1400px] animate-fade-in">
+      <Encabezado
+        icono={Filter}
+        titulo="Embudo"
+        sub={listo ? `${conEtapa} ${conEtapa === 1 ? "chat" : "chats"} en el embudo · arrastrá las tarjetas entre etapas` : "Cargando…"}
+      />
+
+      {listo && porEtapa.sin.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-ink-700 bg-ink-900/60 px-3.5 py-2 text-xs text-ink-300">
+          <span>
+            <b className="text-white">{porEtapa.sin.length}</b> {porEtapa.sin.length === 1 ? "chat sin etapa no está" : "chats sin etapa no están"} en el embudo.
+          </span>
+          <button onClick={() => setVerSin((v) => !v)} className="flex items-center gap-1 font-semibold text-brand-300 hover:text-white">
+            {verSin ? <>Ocultarlos <ChevronUp className="h-3.5 w-3.5" /></> : <>Verlos <ChevronDown className="h-3.5 w-3.5" /></>}
           </button>
         </div>
-        {brands.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-ink-300">Creá una marca antes de cargar oportunidades.</p>
-            <a href="/marcas" className="btn-primary mt-4 w-full">Crear una marca</a>
-          </div>
-        ) : (
-          <div className="mt-4 space-y-3">
-            <Field label="Título" value={title} onChange={setTitle} placeholder="Ej: Pedido mayorista" />
-            <Field label="Contacto" value={contactName} onChange={setContactName} placeholder="Nombre del cliente" />
-            <Field label="Valor estimado (ARS)" value={value} onChange={setValue} placeholder="50000" />
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="label mb-1.5">Etapa</div>
-                <select value={stageId} onChange={(e) => setStageId(e.target.value)} className="input">
-                  {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+      )}
+
+      {listo && etapas.length === 0 ? (
+        <Vacio icono={Filter} titulo="Todavía no hay etapas" texto="Las etapas del embudo se crean en Configuración. Después, desde cada chat, «Etapa ▾»." />
+      ) : listo && conEtapa === 0 && !verSin ? (
+        <Vacio icono={Filter} titulo="Todavía no hay chats con etapa" texto="Desde el chat, «Etapa ▾» para ponerle una. Las tarjetas aparecen acá por columna." />
+      ) : (
+        <div className="no-scrollbar overflow-x-auto pb-2">
+          <div className="flex gap-3" style={{ minWidth: "min-content" }}>
+            {columnas.map((col) => (
+              <div
+                key={col.id}
+                onDragOver={(e) => onDragOver(e, col.id)}
+                onDragLeave={() => sobre === col.id && setSobre(null)}
+                onDrop={(e) => onDrop(e, col.id)}
+                className={`flex w-[280px] shrink-0 flex-col rounded-2xl border bg-ink-900/60 transition ${
+                  sobre === col.id ? "border-brand-500/60 bg-brand-500/5" : "border-ink-800"
+                }`}
+              >
+                <div className="flex items-center gap-2 border-b border-ink-800 px-3 py-2.5">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: col.color }} />
+                  <span className="text-sm font-bold text-white">{col.nombre}</span>
+                  <span className="ml-auto rounded-full bg-ink-800 px-2 py-0.5 text-[11px] font-semibold text-ink-300">{col.lista.length}</span>
+                </div>
+                <div className="flex max-h-[calc(100vh-16rem)] min-h-[120px] flex-col gap-2 overflow-y-auto p-2">
+                  {col.lista.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-ink-700 px-3 py-6 text-center text-[11px] text-ink-500">
+                      {col.id === SIN_ETAPA ? "Todos tienen etapa." : "Soltá acá un chat"}
+                    </div>
+                  )}
+                  {col.lista.map((c) => (
+                    <Tarjeta
+                      key={c.id}
+                      conv={c}
+                      etapas={etapas}
+                      pedido={c.pedido_id ? pedidos.find((p) => p.id === c.pedido_id)?.numero || null : null}
+                      etiquetas={etiquetasDe(empresa, c.etiquetas)}
+                      esCelular={esCelular}
+                      arrastrando={arrastrando === c.id}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", c.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        setArrastrando(c.id);
+                      }}
+                      onDragEnd={() => {
+                        setArrastrando(null);
+                        setSobre(null);
+                      }}
+                      onMover={(etapaId) => mover(c.id, etapaId)}
+                      onAbrir={() => router.push(`/inbox?c=${encodeURIComponent(c.id)}`)}
+                    />
+                  ))}
+                </div>
               </div>
-              <div>
-                <div className="label mb-1.5">Responsable</div>
-                <select value={responsible} onChange={(e) => setResponsible(e.target.value)} className="input">
-                  {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <div className="label mb-1.5">Marca</div>
-              <select value={brandId} onChange={(e) => setBrandId(e.target.value)} className="input">
-                {brands.map((b) => <option key={b.id} value={b.id}>{b.logo} {b.name}</option>)}
-              </select>
-            </div>
-            <button disabled={!canSave} onClick={save} className="btn-primary w-full">
-              Crear oportunidad
-            </button>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+function Tarjeta({
+  conv,
+  etapas,
+  pedido,
+  etiquetas,
+  esCelular,
+  arrastrando,
+  onDragStart,
+  onDragEnd,
+  onMover,
+  onAbrir,
+}: {
+  conv: Conversacion;
+  etapas: Etapa[];
+  pedido: string | null;
+  etiquetas: { id: string; nombre: string; color: string }[];
+  esCelular: boolean;
+  arrastrando: boolean;
+  onDragStart: (e: RDragEvent<HTMLDivElement>) => void;
+  onDragEnd: () => void;
+  onMover: (etapaId: string | null) => void;
+  onAbrir: () => void;
+}) {
+  const m = canalMeta(conv.canal);
+  const Icono = m.icono;
   return (
-    <div>
-      <div className="label mb-1.5">{label}</div>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="input" />
+    <div
+      draggable={!esCelular}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onClick={onAbrir}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onAbrir();
+      }}
+      className={`cursor-pointer rounded-xl border border-ink-700 bg-ink-850 p-2.5 transition hover:border-ink-600 ${arrastrando ? "opacity-40" : ""}`}
+      title="Abrir el chat"
+    >
+      <div className="flex items-center gap-2">
+        <Avatar nombre={conv.nombre} tam="sm" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate text-sm font-semibold text-white">{conv.nombre}</span>
+            <Icono className="h-3.5 w-3.5 shrink-0" style={{ color: m.color }} aria-label={m.nombre} />
+          </div>
+          <div className="text-[10px] text-ink-500">{haceCuanto(conv.ultimo_en)}</div>
+        </div>
+      </div>
+      {conv.ultimo_texto && <p className="mt-1.5 line-clamp-2 text-xs text-ink-400">{recortar(conv.ultimo_texto, 120)}</p>}
+      {(etiquetas.length > 0 || pedido) && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {etiquetas.map((e) => <ChipColor key={e.id} color={e.color} chico>{e.nombre}</ChipColor>)}
+          {pedido && <span className="chip bg-ink-800 px-2 py-0.5 font-mono text-[10px] text-ink-300"><Package className="h-3 w-3" /> {pedido}</span>}
+        </div>
+      )}
+      {esCelular && (
+        <select
+          className="input mt-2 py-1 text-xs"
+          value={conv.etapa_id || ""}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            e.stopPropagation();
+            onMover(e.target.value || null);
+          }}
+          aria-label="Mover a otra etapa"
+        >
+          <option value="">Sin etapa</option>
+          {etapas.map((et) => <option key={et.id} value={et.id}>{et.nombre}</option>)}
+        </select>
+      )}
     </div>
   );
 }
