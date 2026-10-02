@@ -374,8 +374,13 @@ async function correr() {
     igual(r.cambios.fuera_horario, true);
     const r2 = await post("/api/crm/bot/probar", { texto: "hola", fuera_de_horario: false });
     igual(r2.respuestas.map((x) => x.motivo), ["bienvenida", "menu"]);
-    const r3 = await post("/api/crm/bot/probar", { texto: "hacen envío?", conversacion_id: ctx.convId });
+    const r3 = await post("/api/crm/bot/probar", { texto: "hacen envío?", fuera_de_horario: false });
     igual(r3.respuestas[0].motivo.split(":")[0], "regla");
+    igual(r3.respuestas[0].texto, "Hacemos envíos a todo el país.");
+    // sobre la conversación real una persona acaba de responder: el bot calla (candado pausa_si_persona_min)
+    const r4 = await post("/api/crm/bot/probar", { texto: "hacen envío?", conversacion_id: ctx.convId });
+    igual(r4.respuestas.length, 0);
+    ok(/persona respondió/.test(r4.explicacion), r4.explicacion);
     await put("/api/crm/bot", { ...ctx.bot, tope_por_dia: 999 }, 400);
     await put("/api/crm/bot", ctx.bot);
   });
@@ -526,6 +531,8 @@ async function correr() {
     ctx.canalWa = c;
     const otra = await post("/api/crm/canales", { tipo: "whatsapp", phone_number_id: "123456789", token: "EAAotro" });
     igual(otra.id, c.id, "mismo (tipo, externo_id) → mismo canal");
+    igual(otra.app_secret_cargado, true, "reconectar sin app_secret conserva el guardado");
+    igual(otra.waba_id, "987654321", "conserva el waba_id");
     await post("/api/crm/canales", { tipo: "whatsapp", token: "x" }, 400);
     const pb = await post(`/api/crm/canales/${c.id}/probar`, {});
     igual(pb.ok, true);
@@ -747,7 +754,7 @@ async function correr() {
     const r = await llamar("GET", "/api/crm/exportar/pedidos");
     igual(r.status, 200);
     ok(/text\/csv/.test(r.headers.get("content-type")), r.headers.get("content-type"));
-    ok(/^﻿numero,fecha,nombre/.test(r.texto), r.texto.slice(0, 60));
+    ok(/^numero,fecha,nombre/.test(r.texto), r.texto.slice(0, 60)); // fetch().text() saca el BOM
     ok(/#1001/.test(r.texto) && /1x Remera negra/.test(r.texto), r.texto);
     const c = await llamar("GET", "/api/crm/exportar/contactos");
     ok(/nombre,telefono,email/.test(c.texto));

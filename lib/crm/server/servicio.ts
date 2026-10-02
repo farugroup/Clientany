@@ -166,7 +166,9 @@ export async function procesarEntrante(
   empresa: Empresa,
   canal: Canal,
   entrante: Entrante,
-  opciones: { simulado?: boolean } = {}
+  // `canalBot`: en el simulador sobre un canal manual, el bot evalúa como si
+  // fuera ese tipo de canal (si no, no habría forma de probarlo sin conectar nada).
+  opciones: { simulado?: boolean; canalBot?: CanalTipo } = {}
 ): Promise<ResultadoEntrante> {
   const ahora = new Date();
   const simulado = !!opciones.simulado;
@@ -328,10 +330,11 @@ export async function procesarEntrante(
   let bot: BotResultado | undefined;
   if (!entrante.eco) {
     const [botConf, productos, pedidos] = await Promise.all([db.bot(empresa.id), db.productos(empresa.id), db.pedidos(empresa.id)]);
+    const convParaBot = opciones.canalBot && conv.canal === "manual" ? { ...conv, canal: opciones.canalBot } : conv;
     bot = evaluarBot({
       empresa,
       bot: completarBot(botConf),
-      conv,
+      conv: convParaBot,
       contacto,
       texto: entrante.texto || "",
       esPrimerMensaje,
@@ -804,7 +807,8 @@ export async function simular(db: Db, empresa: Empresa, miembro: Miembro, input:
     eco: false,
   };
   void miembro;
-  return procesarEntrante(db, empresa, canal, entrante, { simulado: true });
+  const canalBot: CanalTipo | undefined = canal.tipo === "manual" ? (input.canal_tipo && input.canal_tipo !== "manual" ? input.canal_tipo : "whatsapp") : undefined;
+  return procesarEntrante(db, empresa, canal, entrante, { simulado: true, canalBot });
 }
 
 // ============================================================
@@ -1181,6 +1185,9 @@ export async function conectarCanal(db: Db, empresa: Empresa, input: ConectarCan
   }
 
   const previo = input.tipo === "manual" ? null : await db.canalPorExterno(input.tipo, externo_id, empresa.id);
+  // Si reconectan con token nuevo pero sin app_secret, el secreto guardado se conserva.
+  const credsPrevias = previo && !appSecret ? await db.credencialesCanal(previo.id) : null;
+  const secretoFinal = appSecret || credsPrevias?.app_secret || "";
   const canal: Canal = {
     id: previo?.id || uid("ch"),
     empresa_id: empresa.id,
@@ -1191,8 +1198,8 @@ export async function conectarCanal(db: Db, empresa: Empresa, input: ConectarCan
     externo_id,
     waba_id: waba_id || previo?.waba_id,
     page_id: page_id || previo?.page_id,
-    token_cargado: !!token,
-    app_secret_cargado: !!appSecret,
+    token_cargado: !!token || !!previo?.token_cargado,
+    app_secret_cargado: !!secretoFinal || (!token && !!previo?.app_secret_cargado),
     ultimo_error: undefined,
     conectado_en: ahora,
     detalle: { ...(previo?.detalle || {}), ...detalle },
@@ -1203,7 +1210,7 @@ export async function conectarCanal(db: Db, empresa: Empresa, input: ConectarCan
   if (!canal.page_id) delete canal.page_id;
   // Sin token (manual): sin credenciales. Con token: se reemplazan. Si es una
   // reconexión sin token nuevo, se mantienen las guardadas.
-  const credenciales = input.tipo === "manual" ? null : token ? { token, app_secret: appSecret || undefined } : undefined;
+  const credenciales = input.tipo === "manual" ? null : token ? { token, app_secret: secretoFinal || undefined } : undefined;
   return db.guardarCanal(canal, credenciales);
 }
 

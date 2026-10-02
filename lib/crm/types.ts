@@ -112,6 +112,7 @@ export interface Canal {
     nombre_pagina?: string;
     usuario_ig?: string;
     calidad?: string;
+    flujo?: "instagram" | "facebook"; // Instagram: por Instagram Login o por la página de Facebook
   };
   api_version?: string; // "v21.0"
 }

@@ -23,6 +23,8 @@ export const POST = manejar(async (req) => {
   let pedidosDelContacto = null;
   if (convId) {
     conv = await convDe(db, empresa, convId);
+    // Sobre un chat de canal manual el bot nunca escribe: para probarlo se evalúa como si fuera `canal`.
+    if (conv.canal === "manual") conv = { ...conv, canal };
     const r = await pedidosDeConversacion(db, empresa, conv);
     contacto = r.contacto;
     pedidosDelContacto = r.pedidos;

@@ -223,7 +223,10 @@ export function horarioEnCriollo(horario: Horario | undefined): string {
     if (g) g.dias.push(d.dia);
     else grupos.push({ desde: d.desde, hasta: d.hasta, dias: [d.dia] });
   }
-  const hora = (s: string) => (s.endsWith(":00") ? s.slice(0, -3) : s);
+  const hora = (s: string) => {
+    const [h, m] = s.split(":");
+    return m === "00" || !m ? String(Number(h)) : `${Number(h)}:${m}`;
+  };
   return grupos
     .map((g) => {
       const ds = g.dias.map((x) => nombres[x]);

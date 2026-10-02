@@ -6,11 +6,16 @@ export const runtime = "nodejs";
 
 export const PATCH = manejar<{ id: string }>(async (req, { params }) => {
   const { db, empresa, miembro } = await contexto();
-  exigirAdmin(miembro);
+  // Cada uno puede cambiar su propio nombre («Tu perfil»); el resto es de admin.
+  const esYo = params.id === miembro.id;
+  if (!esYo) exigirAdmin(miembro);
   const otro = await miembroDe(db, empresa, params.id);
   const b = await leerJson(req);
   const patch: { rol?: "admin" | "agente"; nombre?: string } = {};
-  if ("rol" in b) patch.rol = opcion(b, "rol", ["admin", "agente"] as const);
+  if ("rol" in b) {
+    if (esYo && miembro.rol !== "admin") exigirAdmin(miembro);
+    patch.rol = opcion(b, "rol", ["admin", "agente"] as const);
+  }
   if ("nombre" in b) {
     const n = textoOpcional(b, "nombre");
     if (!n) throw new Invalido("El nombre no puede quedar vacío.", "falta_nombre");
