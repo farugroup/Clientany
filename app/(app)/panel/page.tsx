@@ -1,317 +1,362 @@
 "use client";
-
+// /panel — el tablero del CRM: cómo viene la atención hoy y en el mes.
+import { useState } from "react";
 import Link from "next/link";
 import {
-  MessageSquare,
-  DollarSign,
-  ShoppingCart,
-  Truck,
-  TrendingUp,
-  Zap,
+  Activity,
   ArrowRight,
-  Clock,
-  CheckCircle2,
+  Bot,
+  Boxes,
+  Filter,
+  FlaskConical,
+  Inbox,
+  LayoutDashboard,
+  MessageCircle,
+  MessagesSquare,
+  PackageX,
+  Plug,
+  RefreshCw,
+  ShoppingBag,
+  Timer,
+  Upload,
+  Users,
+  type LucideIcon,
 } from "lucide-react";
-import { StatCard, SectionTitle, Pill } from "@/components/ui";
-import { RevenueChart, ChannelsChart } from "@/components/DashboardCharts";
-import { useApp, brandById } from "@/lib/store";
-import { useData } from "@/lib/data-store";
-import { channelMeta, orderStatusMeta } from "@/lib/channels";
-import { money, compactMoney, timeAgo, num } from "@/lib/format";
+import type { CanalTipo } from "@/lib/crm/types";
+import { GRUPOS, dinero, haceCuanto } from "@/lib/crm/core";
+import { getRepo } from "@/lib/crm/repo";
+import { useActividad, useEmpresa, useEsAdmin, useMetricas, useModo, usePedidos, useYo } from "@/lib/crm/hooks";
+import { StatCard } from "@/components/ui";
+import { Confirmar, Encabezado, avisar } from "@/components/crm/ui";
+import { BandaDemo, CANAL_VISUAL, Esqueleto, Tarjeta, useAhora } from "@/components/crm/pantallas/comun";
+import { BarrasEtapas, GraficoCanales } from "@/components/crm/pantallas/panel-graficos";
 
-export default function Dashboard() {
-  const activeBrandId = useApp((s) => s.activeBrandId);
-  const channels = useData((s) => s.channels);
-  const conversations = useData((s) => s.conversations);
-  const abandonedCarts = useData((s) => s.carts);
-  const orders = useData((s) => s.orders);
-  const campaigns = useData((s) => s.campaigns);
-  const storeConnections = useData((s) => s.stores);
-  const settings = useData((s) => s.settings);
-  const scope = activeBrandId === "all" ? "todas tus marcas" : brandById(activeBrandId)?.name;
-  const inBrand = <T extends { brandId: string }>(arr: T[]) =>
-    activeBrandId === "all" ? arr : arr.filter((i) => i.brandId === activeBrandId);
+const nf = new Intl.NumberFormat("es-AR");
+const n = (x: number | undefined | null) => (typeof x === "number" ? nf.format(x) : "sin dato");
 
-  const myChannels = inBrand(channels);
-  const myConvos = inBrand(conversations);
-  const myCarts = inBrand(abandonedCarts);
-  const myCampaigns = inBrand(campaigns);
-  const myStores = inBrand(storeConnections);
+function minutosLindos(min: number): string {
+  if (min < 1) return "menos de 1 min";
+  if (min < 60) return `${Math.round(min)} min`;
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  return m ? `${h} h ${m} min` : `${h} h`;
+}
 
-  const unread = myChannels.reduce((s, c) => s + c.unread, 0);
-  const recoveredRevenue = myCampaigns
-    .filter((c) => c.channel === "whatsapp")
-    .reduce((s, c) => s + c.revenue, 0);
-  const cartsValue = myCarts
-    .filter((c) => c.recoveryStatus === "nuevo")
-    .reduce((s, c) => s + c.total, 0);
-  const ordersToday = myStores.reduce((s, st) => s + st.ordersToday, 0);
-  const campaignRevenue = myCampaigns.reduce((s, c) => s + c.revenue, 0);
-
+function Acceso({ href, icono: Icon, titulo, texto, color }: { href: string; icono: LucideIcon; titulo: string; texto: string; color: string }) {
   return (
-    <div className="mx-auto max-w-7xl space-y-6 animate-fade-in">
-      {/* Hero */}
-      <div className="card overflow-hidden">
-        <div className="relative flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
-          <div
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-30 blur-3xl"
-            style={{ background: "radial-gradient(circle, #3563ff, transparent 70%)" }}
-          />
-          <div className="relative">
-            <div className="flex items-center gap-2">
-              <span className="chip bg-green-500/10 text-green-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> En vivo
-              </span>
-              <span className="text-xs text-ink-400">Vista de {scope}</span>
-            </div>
-            <h1 className="mt-2 text-xl font-extrabold tracking-tight text-white lg:text-2xl">
-              ¡Hola{settings.ownerName ? `, ${settings.ownerName.split(" ")[0]}` : ""}! 👋 Todo tu
-              ecommerce en un solo lugar
-            </h1>
-            <p className="mt-1 text-sm text-ink-300">
-              {num(unread)} mensajes sin responder · {myConvos.length} conversaciones abiertas ·{" "}
-              {myStores.length} tiendas conectadas
-            </p>
-          </div>
-          <div className="relative flex flex-wrap gap-2">
-            <Link href="/inbox" className="btn-primary">
-              <MessageSquare className="h-4 w-4" /> Ir a la bandeja
-            </Link>
-            <Link href="/carritos" className="btn-ghost">
-              <ShoppingCart className="h-4 w-4" /> Recuperar carritos
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <StatCard
-          label="Mensajes sin responder"
-          value={num(unread)}
-          icon={MessageSquare}
-          trend="12%"
-          trendUp
-          accent="#3563ff"
-          sub={`${myChannels.length} canales activos`}
-        />
-        <StatCard
-          label="Ventas de hoy"
-          value={num(ordersToday)}
-          icon={ShoppingCart}
-          trend="8%"
-          trendUp
-          accent="#16a34a"
-          sub={`en ${myStores.length} tiendas`}
-        />
-        <StatCard
-          label="Carritos por recuperar"
-          value={compactMoney(cartsValue)}
-          icon={TrendingUp}
-          trend="5%"
-          trendUp={false}
-          accent="#f59e0b"
-          sub={`${myCarts.filter((c) => c.recoveryStatus === "nuevo").length} carritos nuevos`}
-        />
-        <StatCard
-          label="Ingresos por campañas"
-          value={compactMoney(campaignRevenue)}
-          icon={DollarSign}
-          trend="23%"
-          trendUp
-          accent="#d946ef"
-          sub="últimos 30 días"
-        />
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="card p-5 lg:col-span-2">
-          <SectionTitle
-            title="Ventas y recuperación de carritos"
-            icon={TrendingUp}
-            action={
-              <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 text-ink-300">
-                  <span className="h-2 w-2 rounded-full bg-brand-400" /> Ventas
-                </span>
-                <span className="flex items-center gap-1.5 text-ink-300">
-                  <span className="h-2 w-2 rounded-full bg-green-500" /> Recuperado
-                </span>
-              </div>
-            }
-          />
-          <RevenueChart />
-        </div>
-        <div className="card p-5">
-          <SectionTitle title="Mensajes por canal" icon={MessageSquare} />
-          <ChannelsChart />
-        </div>
-      </div>
-
-      {/* Live activity + quick actions */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Recent conversations */}
-        <div className="card p-5 lg:col-span-2">
-          <SectionTitle
-            title="Actividad reciente"
-            icon={Clock}
-            action={
-              <Link href="/inbox" className="flex items-center gap-1 text-xs font-semibold text-brand-300 hover:text-brand-200">
-                Ver bandeja <ArrowRight className="h-3 w-3" />
-              </Link>
-            }
-          />
-          <div className="space-y-1">
-            {myConvos.slice(0, 6).map((c) => {
-              const meta = channelMeta[c.channel];
-              const Icon = meta.icon;
-              const brand = brandById(c.brandId);
-              return (
-                <Link
-                  key={c.id}
-                  href="/inbox"
-                  className="flex items-center gap-3 rounded-xl p-2.5 transition hover:bg-ink-800"
-                >
-                  <div className="relative">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ink-800 text-lg">
-                      {c.avatar}
-                    </div>
-                    <div
-                      className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ring-2 ring-ink-900"
-                      style={{ background: meta.bg }}
-                    >
-                      <Icon className="h-3 w-3" style={{ color: meta.color }} />
-                    </div>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-white">
-                        {c.customerName}
-                      </span>
-                      {activeBrandId === "all" && (
-                        <span className="hidden text-xs text-ink-500 sm:inline">
-                          {brand?.logo} {brand?.name}
-                        </span>
-                      )}
-                    </div>
-                    <p className="truncate text-xs text-ink-400">{c.lastMessage}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-xs text-ink-500">{timeAgo(c.timestamp)}</span>
-                    {c.unread > 0 && (
-                      <span className="chip bg-brand-500 text-white">{c.unread}</span>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Shipments needing attention */}
-        <div className="card p-5">
-          <SectionTitle
-            title="Envíos a seguir"
-            icon={Truck}
-            action={
-              <Link href="/tracking" className="text-xs font-semibold text-brand-300 hover:text-brand-200">
-                Ver todos
-              </Link>
-            }
-          />
-          <div className="space-y-2.5">
-            {inBrand(orders)
-              .slice(0, 4)
-              .map((o) => {
-                const st = orderStatusMeta[o.status];
-                return (
-                  <Link
-                    key={o.id}
-                    href={`/tracking?q=${o.orderNumber}`}
-                    className="block rounded-xl border border-ink-700 bg-ink-850 p-3 transition hover:border-ink-600"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-semibold text-ink-200">
-                        {o.orderNumber}
-                      </span>
-                      <Pill color={st.color} bg={st.bg}>
-                        {st.label}
-                      </Pill>
-                    </div>
-                    <div className="mt-1.5 text-sm font-medium text-white">{o.customerName}</div>
-                    <div className="mt-0.5 flex items-center justify-between text-xs text-ink-400">
-                      <span>
-                        {o.carrier} · {o.destination}
-                      </span>
-                      <span>{money(o.total, o.currency)}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-          </div>
-        </div>
-      </div>
-
-      {/* Quick actions banner */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <QuickAction
-          href="/tracking"
-          icon={Truck}
-          title="Seguí tu envío"
-          desc="Buscá cualquier pedido por número, mail o nombre y respondé al instante."
-          color="#598bff"
-        />
-        <QuickAction
-          href="/mercadolibre"
-          icon={Zap}
-          title="Responder Mercado Libre"
-          desc="Contestá preguntas y mensajes de ML sin salir de Clientany."
-          color="#FFD400"
-        />
-        <QuickAction
-          href="/campanas"
-          icon={CheckCircle2}
-          title="Lanzar campaña"
-          desc="Email + WhatsApp marketing con tu base de leads capturados."
-          color="#d946ef"
-        />
-      </div>
-    </div>
+    <Link href={href} className="card group flex items-start gap-3 p-4 transition hover:border-brand-500/40">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: `${color}1f` }}>
+        <Icon className="h-5 w-5" style={{ color }} />
+      </span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-1 text-sm font-semibold text-white">
+          {titulo}
+          <ArrowRight className="h-3.5 w-3.5 text-ink-500 transition group-hover:translate-x-0.5 group-hover:text-brand-300" />
+        </span>
+        <span className="mt-0.5 block text-xs text-ink-400">{texto}</span>
+      </span>
+    </Link>
   );
 }
 
-function QuickAction({
-  href,
-  icon: Icon,
-  title,
-  desc,
-  color,
-}: {
-  href: string;
-  icon: typeof Truck;
-  title: string;
-  desc: string;
-  color: string;
-}) {
+export default function PanelPage() {
+  const { datos, cargando, recargar } = useMetricas();
+  const empresa = useEmpresa();
+  const yo = useYo();
+  const modo = useModo();
+  const esAdmin = useEsAdmin();
+  const actividad = useActividad();
+  const pedidos = usePedidos();
+  const ahora = useAhora(60_000);
+  const [confirmar, setConfirmar] = useState<"vaciar" | "cargar" | null>(null);
+
+  const hayDatos = !!datos && (datos.conversaciones.total > 0 || datos.stock.productos > 0 || pedidos.length > 0);
+  const moneda = datos?.pedidos.moneda || empresa?.moneda || "ARS";
+  const primerNombre = (yo?.nombre || "").split(" ")[0];
+  const pruebaHasta =
+    empresa?.plan === "prueba" && empresa.prueba_hasta
+      ? new Date(empresa.prueba_hasta).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })
+      : null;
+
+  const porCanal = datos
+    ? (Object.keys(CANAL_VISUAL) as CanalTipo[])
+        .filter((c) => c !== "manual" || (datos.por_canal[c] || 0) > 0)
+        .map((c) => ({ nombre: CANAL_VISUAL[c].nombre, valor: datos.por_canal[c] || 0, color: CANAL_VISUAL[c].color }))
+    : [];
+  const porEtapa = datos ? datos.por_etapa.map((e) => ({ nombre: e.nombre, valor: e.cantidad, color: e.color })) : [];
+  const equipo = datos ? [...datos.equipo].sort((a, b) => b.respondidas_mes - a.respondidas_mes) : [];
+  const sinResponder = datos?.conversaciones.sin_responder ?? 0;
+
   return (
-    <Link
-      href={href}
-      className="card group flex items-start gap-3 p-4 transition hover:border-brand-500/40"
-    >
-      <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-        style={{ background: `${color}1f` }}
-      >
-        <Icon className="h-5 w-5" style={{ color }} />
-      </div>
-      <div className="min-w-0">
-        <div className="flex items-center gap-1 text-sm font-semibold text-white">
-          {title}
-          <ArrowRight className="h-3.5 w-3.5 text-ink-500 transition group-hover:translate-x-0.5 group-hover:text-brand-300" />
+    <div className="mx-auto max-w-7xl space-y-5 animate-fade-in">
+      {modo === "demo" && (
+        <BandaDemo
+          accion={
+            <div className="flex flex-wrap items-center gap-2">
+              {esAdmin &&
+                (hayDatos ? (
+                  <button className="btn-ghost px-3 py-1.5 text-xs" onClick={() => setConfirmar("vaciar")}>
+                    Vaciar datos de ejemplo
+                  </button>
+                ) : (
+                  <button className="btn-ghost px-3 py-1.5 text-xs" onClick={() => setConfirmar("cargar")}>
+                    Volver a cargar ejemplo
+                  </button>
+                ))}
+              <Link href="/registro" className="btn-primary px-3 py-1.5 text-xs">
+                Crear mi cuenta
+              </Link>
+            </div>
+          }
+        >
+          Estás viendo datos de ejemplo: todo lo que hagas queda en este navegador.
+        </BandaDemo>
+      )}
+
+      <Encabezado
+        titulo={primerNombre ? `Hola, ${primerNombre}` : "Panel"}
+        icono={LayoutDashboard}
+        sub={
+          <span className="flex flex-wrap items-center gap-2">
+            <span>{empresa ? `Así viene la atención de ${empresa.nombre}.` : "Así viene la atención."}</span>
+            {pruebaHasta && <span className="chip bg-brand-500/10 px-2 py-0.5 text-[11px] text-brand-300">Prueba gratis hasta {pruebaHasta}</span>}
+          </span>
+        }
+        acciones={
+          <button className="btn-ghost py-2" onClick={recargar} disabled={cargando}>
+            <RefreshCw className={`h-4 w-4 ${cargando ? "animate-spin" : ""}`} /> Actualizar
+          </button>
+        }
+      />
+
+      {/* Números */}
+      {!datos ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Esqueleto key={i} className="h-[132px]" />
+          ))}
         </div>
-        <p className="mt-0.5 text-xs text-ink-400">{desc}</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <Link href="/inbox" className="block rounded-2xl transition hover:ring-1 hover:ring-brand-500/40" aria-label="Ir a la bandeja">
+              <StatCard
+                label="Sin responder"
+                value={n(sinResponder)}
+                icon={Inbox}
+                accent={sinResponder > 0 ? "#ef4444" : "#16a34a"}
+                sub={sinResponder > 0 ? "Ir a la bandeja" : "Todo al día"}
+              />
+            </Link>
+            <StatCard
+              label="Abiertas"
+              value={n(datos.conversaciones.abiertas)}
+              icon={MessagesSquare}
+              accent="#3563ff"
+              sub={`de ${n(datos.conversaciones.total)} en total`}
+            />
+            <StatCard label="Conversaciones hoy" value={n(datos.conversaciones.hoy)} icon={MessageCircle} accent="#598bff" />
+            <StatCard
+              label="Respondidas por el bot hoy"
+              value={n(datos.bot.respuestas_hoy)}
+              icon={Bot}
+              accent="#8b5cf6"
+              sub={`${n(datos.bot.respuestas_mes)} en el mes · ${n(datos.bot.derivadas_a_humano)} pasadas a una persona`}
+            />
+            <StatCard
+              label="Pedidos del mes"
+              value={n(datos.pedidos.mes)}
+              icon={ShoppingBag}
+              accent="#16a34a"
+              sub={`${dinero(datos.pedidos.monto_mes, moneda)} · ${n(datos.pedidos.hoy)} hoy`}
+            />
+            <Link href="/stock" className="block rounded-2xl transition hover:ring-1 hover:ring-brand-500/40" aria-label="Ir a stock">
+              <StatCard
+                label="Sin stock"
+                value={n(datos.stock.sin_stock)}
+                icon={PackageX}
+                accent={datos.stock.sin_stock > 0 ? "#ef4444" : datos.stock.bajo_minimo > 0 ? "#f59e0b" : "#16a34a"}
+                sub={`${n(datos.stock.bajo_minimo)} bajo mínimo · de ${n(datos.stock.productos)}`}
+              />
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-ink-500">Bandeja:</span>
+            {GRUPOS.map((g) => (
+              <Link key={g.id} href="/inbox" className="chip border border-ink-700 bg-ink-850 text-ink-300 hover:border-ink-600 hover:text-white">
+                {g.nombre} <b className="text-white">{n(datos.por_grupo[g.id] || 0)}</b>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Tarjeta titulo="Conversaciones por canal" icono={MessageCircle} className="lg:col-span-2">
+          {!datos ? (
+            <Esqueleto className="h-[220px]" />
+          ) : porCanal.some((c) => c.valor > 0) ? (
+            <GraficoCanales datos={porCanal} />
+          ) : (
+            <div className="flex h-[220px] flex-col items-center justify-center gap-2 text-center text-sm text-ink-400">
+              Todavía no hay conversaciones.
+              {esAdmin && (
+                <Link href="/conexiones" className="text-xs font-semibold text-brand-300 hover:text-brand-200">
+                  Conectá un canal
+                </Link>
+              )}
+            </div>
+          )}
+        </Tarjeta>
+        <Tarjeta
+          titulo="Embudo por etapa"
+          icono={Filter}
+          acciones={
+            <Link href="/embudo" className="text-xs font-semibold text-brand-300 hover:text-brand-200">
+              Ver embudo
+            </Link>
+          }
+        >
+          {!datos ? (
+            <Esqueleto className="h-[220px]" />
+          ) : porEtapa.length ? (
+            <BarrasEtapas datos={porEtapa} />
+          ) : (
+            <p className="py-8 text-center text-sm text-ink-400">
+              Sin etapas cargadas.{" "}
+              <Link href="/ajustes#etapas" className="font-semibold text-brand-300 hover:text-brand-200">
+                Armalas en Configuración
+              </Link>
+            </p>
+          )}
+        </Tarjeta>
       </div>
-    </Link>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Tarjeta titulo="Equipo este mes" icono={Users}>
+          {!datos ? (
+            <Esqueleto className="h-40" />
+          ) : equipo.length ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] font-bold uppercase tracking-wider text-ink-500">
+                  <th className="pb-2">Miembro</th>
+                  <th className="pb-2 text-right">Respondidas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {equipo.map((m) => (
+                  <tr key={m.miembro_id} className="border-t border-ink-800/60">
+                    <td className="py-2 text-ink-100">{m.nombre}</td>
+                    <td className="py-2 text-right font-mono text-white">{n(m.respondidas_mes)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="py-6 text-center text-sm text-ink-400">Nadie respondió todavía este mes.</p>
+          )}
+        </Tarjeta>
+
+        <Tarjeta titulo="Primera respuesta" icono={Timer} sub="Promedio del mes: cuánto tarda una persona en contestar el primer mensaje.">
+          {!datos ? (
+            <Esqueleto className="h-24" />
+          ) : typeof datos.primera_respuesta_min === "number" ? (
+            <div className="py-4">
+              <div className="text-3xl font-extrabold tracking-tight text-white">{minutosLindos(datos.primera_respuesta_min)}</div>
+              <p className="mt-1 text-xs text-ink-400">
+                {datos.primera_respuesta_min <= 15
+                  ? "Muy bien: así se cierran más ventas."
+                  : datos.primera_respuesta_min <= 60
+                    ? "Bien. Bajarlo de 15 min suma ventas."
+                    : "Alto: el bot y las respuestas rápidas ayudan a bajarlo."}
+              </p>
+            </div>
+          ) : (
+            <div className="py-4">
+              <div className="text-2xl font-bold text-ink-400">sin dato</div>
+              <p className="mt-1 text-xs text-ink-500">Aparece cuando el equipo conteste los primeros chats del mes.</p>
+            </div>
+          )}
+        </Tarjeta>
+
+        <Tarjeta titulo="Últimas acciones" icono={Activity}>
+          {actividad.length ? (
+            <ul className="space-y-2.5">
+              {actividad.slice(0, 7).map((a) => (
+                <li key={a.id} className="flex items-start gap-2 text-xs">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
+                  <span className="min-w-0 flex-1 text-ink-300">
+                    <b className="font-semibold text-white">{a.quien}</b> {a.que}
+                  </span>
+                  <span className="shrink-0 text-[11px] text-ink-500">{haceCuanto(a.creado, ahora)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-6 text-center text-sm text-ink-400">Todavía no hay movimientos.</p>
+          )}
+        </Tarjeta>
+      </div>
+
+      {/* Accesos rápidos */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Acceso href="/inbox" icono={Inbox} titulo="Bandeja" texto="Todos los chats de WhatsApp, Instagram y Messenger." color="#3563ff" />
+        <Acceso href="/conexiones" icono={Plug} titulo="Conectar canal" texto="Tu WhatsApp Business, Instagram o Messenger." color="#25D366" />
+        <Acceso
+          href="/pedidos?importar=1"
+          icono={Upload}
+          titulo="Cargar pedidos"
+          texto="A mano, por CSV o por API, para que el bot los conozca."
+          color="#16a34a"
+        />
+        <Acceso href="/automaticas" icono={FlaskConical} titulo="Probar el bot" texto="Escribí como un cliente y mirá qué contesta." color="#8b5cf6" />
+      </div>
+      {datos && datos.stock.productos === 0 && (
+        <p className="flex items-center gap-1.5 text-xs text-ink-500">
+          <Boxes className="h-3.5 w-3.5" /> Cargá tu{" "}
+          <Link href="/stock" className="font-semibold text-brand-300 hover:text-brand-200">
+            lista de stock
+          </Link>{" "}
+          para que el bot conteste precios y disponibilidad.
+        </p>
+      )}
+
+      <Confirmar
+        abierto={confirmar === "vaciar"}
+        onCerrar={() => setConfirmar(null)}
+        titulo="¿Vaciar los datos de ejemplo?"
+        texto="Se borran los chats, clientes, pedidos y productos de ejemplo. Tu configuración (bot, horario, etapas) queda."
+        confirmar="Sí, vaciar"
+        peligro
+        onConfirmar={async () => {
+          try {
+            await getRepo().vaciarDatosDePrueba();
+            avisar("Listo: arrancás de cero.");
+            recargar();
+          } catch (e) {
+            avisar(e, "error");
+          }
+        }}
+      />
+      <Confirmar
+        abierto={confirmar === "cargar"}
+        onCerrar={() => setConfirmar(null)}
+        titulo="¿Cargar los datos de ejemplo?"
+        texto="Se suman chats, clientes, pedidos y productos de ejemplo para que pruebes todo."
+        confirmar="Sí, cargar"
+        onConfirmar={async () => {
+          try {
+            await getRepo().cargarDatosDePrueba();
+            avisar("Datos de ejemplo cargados.");
+            recargar();
+          } catch (e) {
+            avisar(e, "error");
+          }
+        }}
+      />
+    </div>
   );
 }

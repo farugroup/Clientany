@@ -26,3 +26,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# CRM en modo memoria (next dev / tests)
+.clientany-dev/

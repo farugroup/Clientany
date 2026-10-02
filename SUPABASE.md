@@ -70,6 +70,46 @@ Después tocá **Redeploy**. ¡Listo! La app ahora pide **registro/login** y gua
 - Si entrás a `/panel` **sin sesión**, te redirige a `/login` → cuentas reales activas ✅
 - Si `/login` muestra “Modo demo activo” → todavía faltan las variables de Supabase.
 
+## CRM multiempresa (bandeja, pedidos, stock, bot, API)
+
+El CRM guarda todo en tablas propias (`crm_*`) y en un bucket de archivos. Para activarlo:
+
+1. **Correr el esquema.** En Supabase → **SQL Editor → New query**, pegá el contenido de
+   [`supabase/crm_schema.sql`](./supabase/crm_schema.sql) y tocá **Run**. Se puede correr más de una
+   vez (todo es `if not exists`). Crea las tablas `crm_empresas`, `crm_miembros`, `crm_canales`,
+   `crm_contactos`, `crm_conversaciones`, `crm_mensajes`, `crm_pedidos`, `crm_productos`… y el bucket
+   público `crm-media`.
+2. **Cargar la service role key.** En Supabase → **Project Settings → API** copiá la **service_role key**
+   y ponela en `SUPABASE_SERVICE_ROLE_KEY`. El servidor escribe con ella (saltea RLS); el navegador
+   nunca la ve. Las tablas quedan con RLS prendido y sin políticas, así la anon key no lee nada.
+3. **Generar la clave de cifrado.** Los tokens de Meta y las claves de IA de cada empresa se guardan
+   cifrados con AES-256-GCM. Generá un secreto con:
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+   y ponelo en `CLIENTANY_SECRET`. Si lo cambiás después, las credenciales ya guardadas dejan de poder
+   leerse (habrá que volver a conectar cada canal).
+4. **(Opcional) IA de la plataforma.** `ANTHROPIC_API_KEY` habilita el copilot para todas las empresas.
+   Si no la cargás, cada empresa puede poner la suya en **Configuración → IA**.
+5. **Cargar las variables en Vercel** (`SUPABASE_SERVICE_ROLE_KEY`, `CLIENTANY_SECRET`,
+   `ANTHROPIC_API_KEY`) y hacer **Redeploy**.
+
+### ¿Cómo sé si quedó?
+
+- Iniciá sesión y abrí `https://TU-DOMINIO/api/crm/estado`: tiene que devolver un JSON con tu
+  `empresa` (se crea sola la primera vez) y `yo` con `rol: "admin"`. Si devuelve 401, no hay sesión;
+  si devuelve 500 con «Base de datos», falta correr el esquema o la service role key está mal.
+- En **Conexiones** vas a ver la URL del webhook de Meta (`/api/webhooks/meta/<id de tu empresa>`) y
+  el token de verificación para pegar en la app de Meta.
+
+### Desarrollo sin Supabase
+
+Con `CLIENTANY_DB=memory`, `NEXT_PUBLIC_CLIENTANY_MODO=nube` y `CLIENTANY_DEV_USER=dev@clientany.com`
+el servidor guarda todo en `.clientany-dev/db.json` y el usuario es fijo. Así corren `next dev`, la
+suite `node tests/crm-api.spec.mjs` y Playwright.
+
 ## Qué queda para más adelante (no bloquea el lanzamiento)
 
 - **OAuth real de cada canal** (Mercado Libre, Tienda Nube, WhatsApp/Meta): los endpoints
