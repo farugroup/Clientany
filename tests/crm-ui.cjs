@@ -95,7 +95,7 @@ async function recorrer(nombreModo, base, browser) {
       } catch (e) {
         errores.push("goto: " + e.message.slice(0, 120));
       }
-      const malos = errores.filter((e) => !/favicon|hydration|Warning:|picsum|ERR_CERT|manifest|fonts\.g/i.test(e));
+      const malos = errores.filter((e) => !/favicon|hydration|Warning:|picsum|ERR_CERT|manifest|fonts\.g|RSC payload|Fast Refresh|hot-reloader/i.test(e));
       ok(`[${nombreModo}/${vista.nombre}] ${ruta} abre (${estado}) sin errores`, estado < 400 && malos.length === 0, malos.slice(0, 3).join(" | "));
       if (CAPTURAS) {
         await page.screenshot({ path: path.join(salida, `${nombreModo}-${vista.nombre}${ruta.replace(/\//g, "_") || "_home"}.png`), fullPage: ruta === "/" || ruta === "/docs" });

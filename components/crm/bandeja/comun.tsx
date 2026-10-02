@@ -215,7 +215,7 @@ export function BotonChico({
     ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
     : "border-ink-700 bg-ink-850 text-ink-300 hover:border-ink-600 hover:text-white";
   return (
-    <button type="button" onClick={onClick} title={title} disabled={disabled} className={`${base} ${tono} ${className}`} aria-label={typeof children === "string" ? undefined : title}>
+    <button type="button" onClick={onClick} title={title} disabled={disabled} className={`${base} ${tono} ${className}`} aria-label={children ? undefined : title}>
       {Icono && <Icono className="h-3.5 w-3.5" />}
       {children}
     </button>
