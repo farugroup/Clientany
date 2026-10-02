@@ -7,6 +7,8 @@ import MobileNav from "@/components/MobileNav";
 import Onboarding from "@/components/Onboarding";
 import { useData, useHydrated } from "@/lib/data-store";
 import { useCloudWorkspace } from "@/lib/cloud-sync";
+import { CrmArranque } from "@/lib/crm/index";
+import { Avisos } from "@/components/crm/ui";
 
 export default function AppFrame({ children }: { children: React.ReactNode }) {
   const hydrated = useHydrated();
@@ -31,9 +33,12 @@ export default function AppFrame({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 px-4 pb-24 pt-5 lg:px-6 lg:pb-8">{children}</main>
+        <main className="flex-1 px-4 pb-24 pt-5 lg:px-6 lg:pb-8">
+          <CrmArranque>{children}</CrmArranque>
+        </main>
         <MobileNav />
       </div>
+      <Avisos />
       {!onboardingDone && <Onboarding />}
     </div>
   );
