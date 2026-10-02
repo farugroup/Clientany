@@ -1,631 +1,827 @@
-"use client";
-
-import { useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
-  Sparkles,
   ArrowRight,
-  Check,
-  X,
-  Infinity as InfinityIcon,
-  Truck,
-  ShoppingCart,
-  Tag,
-  Inbox,
-  Megaphone,
-  Building2,
-  Filter,
   Bot,
-  BookOpen,
-  MessageCircle,
-  Instagram,
-  Facebook,
-  ShoppingBag,
-  Music2,
-  Mail,
-  Smartphone,
-  Zap,
-  ShieldCheck,
+  Boxes,
+  Braces,
+  Briefcase,
+  Building2,
+  Check,
   ChevronDown,
+  Inbox,
+  Lock,
+  MessageSquareText,
+  MessagesSquare,
+  Minus,
+  Package,
+  Plug,
+  Smartphone,
+  Sparkles,
   Store,
-  Rocket,
-  Star,
+  UserPlus,
+  UsersRound,
+  Webhook,
+  X,
+  type LucideIcon,
 } from "lucide-react";
+import { channelMeta } from "@/lib/channels";
+import SitioNav from "@/components/landing/SitioNav";
+import SitioPie from "@/components/landing/SitioPie";
+import MaquetaBandeja from "@/components/landing/MaquetaBandeja";
+import TituloSeccion from "@/components/landing/TituloSeccion";
+import FormularioContacto from "@/components/landing/FormularioContacto";
 
-const channelPills = [
-  { icon: MessageCircle, label: "WhatsApp", color: "#25D366" },
-  { icon: Instagram, label: "Instagram", color: "#E1306C" },
-  { icon: ShoppingBag, label: "Mercado Libre", color: "#FFD400" },
-  { icon: Facebook, label: "Messenger", color: "#0084FF" },
-  { icon: Music2, label: "TikTok", color: "#69C9D0" },
-  { icon: Mail, label: "Email", color: "#EA8B00" },
+export const metadata: Metadata = {
+  title: "Clientany — El CRM multicanal para empresas que venden por chat",
+  description:
+    "Todas tus tiendas, todos tus chats, una sola bandeja. WhatsApp Business API, Instagram y Messenger con pedidos, stock, respuestas automáticas, IA y tu equipo. Probá la demo sin registrarte.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Clientany — Todas tus tiendas. Todos tus chats. Una sola bandeja.",
+    description:
+      "El CRM para empresas que venden por chat: WhatsApp Business API, Instagram y Messenger, con pedidos, stock y respuestas automáticas que no molestan.",
+    url: "/",
+    type: "website",
+    locale: "es_AR",
+    siteName: "Clientany",
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Datos de la página
+// ---------------------------------------------------------------------------
+
+const WA = channelMeta.whatsapp;
+const IG = channelMeta.instagram;
+const FB = channelMeta.messenger;
+
+const CHIPS_HERO: { label: string; icon: LucideIcon; color?: string }[] = [
+  { label: "WhatsApp", icon: WA.icon, color: WA.color },
+  { label: "Instagram", icon: IG.icon, color: IG.color },
+  { label: "Messenger", icon: FB.icon, color: FB.color },
+  { label: "API", icon: Braces },
 ];
 
-const stores = ["Tienda Nube", "Shopify", "VTEX", "Vendany", "Mercado Shops", "WooCommerce"];
+const CONEXIONES: { label: string; icon: LucideIcon; color?: string }[] = [
+  { label: "WhatsApp Business API (Meta)", icon: WA.icon, color: WA.color },
+  { label: "Instagram", icon: IG.icon, color: IG.color },
+  { label: "Messenger", icon: FB.icon, color: FB.color },
+  { label: "Tu tienda, por API o CSV", icon: Store },
+];
 
-const features = [
+const GRUPOS_BANDEJA = [
+  { nombre: "Ventas", detalle: "lo nuevo y el que te volvió a escribir", activo: true },
+  { nombre: "Soporte", detalle: "un problema que hay que seguir" },
+  { nombre: "Más adelante", detalle: "lo pospuesto: vuelve solo cuando toca" },
+  { nombre: "Resueltos", detalle: "listo, hasta que escriba de nuevo" },
+  { nombre: "Baja", detalle: "no quiere recibir automáticos" },
+];
+
+const CANDADOS = [
+  "Una bienvenida cada 24 hs por chat, no en cada mensaje",
+  "Tope de respuestas automáticas por chat y por día",
+  "Se calla si una persona respondió hace poco o tomó el chat",
+  "Nunca le escribe a quien pidió la baja",
+];
+
+const FUNCIONES: { icon: LucideIcon; titulo: string; texto: string }[] = [
   {
-    icon: InfinityIcon,
-    color: "#3563ff",
-    title: "Canales y marcas ilimitados",
-    desc: "Sumá tantos WhatsApp, Instagram y Mercado Libre como quieras. Todo dividido por marca y con cambio de contexto en un clic.",
+    icon: Package,
+    titulo: "Historial de pedidos en el chat",
+    texto: "Al lado de cada chat, la ficha del cliente con sus compras, el envío y el seguimiento. Sin preguntarle el nombre.",
   },
   {
-    icon: Inbox,
-    color: "#8b5cf6",
-    title: "Bandeja + Tickets (Whaticket)",
-    desc: "Bandeja unificada con sistema de tickets: colas, agentes, protocolo, notas internas, respuestas rápidas y encuesta de satisfacción.",
+    icon: Boxes,
+    titulo: "Stock y precios al instante",
+    texto: "El bot y tu equipo responden con tu lista real: precio, unidades y si queda poco. Nunca inventa un producto.",
   },
   {
-    icon: Filter,
-    color: "#16a34a",
-    title: "Embudo de ventas (estilo Kommo)",
-    desc: "Pipeline Kanban con etapas, tarjetas de oportunidad, tareas y notas. Arrastrá cada venta hasta cerrarla.",
+    icon: UsersRound,
+    titulo: "Equipo sin cruces",
+    texto: "Asigná chats, «Lo tomo yo» para no pisarse, chat interno para pasarse casos y presencia para ver quién está.",
   },
   {
+    icon: MessageSquareText,
+    titulo: "Plantillas y rápidas",
+    texto: "La ventana de 24 hs de WhatsApp resuelta: si se cerró, te ofrece la plantilla aprobada. Y atajos para lo que escribís siempre.",
+  },
+  {
+    icon: Webhook,
+    titulo: "API y CSV",
+    texto: "Pedidos, stock, contactos y mensajes por API con tu clave, o por CSV. Webhook saliente para enterarte en tu sistema.",
+  },
+  {
+    icon: Sparkles,
+    titulo: "IA que sugiere la respuesta",
+    texto: "Lee el chat, los pedidos y tu stock y te propone qué contestar. Si no sabe, lo dice. Vos revisás y mandás.",
+  },
+  {
+    icon: Smartphone,
+    titulo: "Modo celular",
+    texto: "Se instala como app en el celular (PWA) y atendés con la misma bandeja, estés donde estés.",
+  },
+  {
+    icon: Building2,
+    titulo: "Multimarca",
+    texto: "Varias tiendas, una bandeja: cada canal atado a su marca y un selector para ver una o todas juntas.",
+  },
+];
+
+const PASOS: { n: number; titulo: string; texto: ReactNode; icon: LucideIcon }[] = [
+  {
+    n: 1,
+    icon: UserPlus,
+    titulo: "Creá tu cuenta (o probá la demo)",
+    texto: (
+      <>
+        En un minuto, sin tarjeta. Si querés mirar antes, la{" "}
+        <Link href="/inbox" className="font-semibold text-brand-300 hover:text-brand-200">
+          demo
+        </Link>{" "}
+        trae chats, pedidos y stock de ejemplo.
+      </>
+    ),
+  },
+  {
+    n: 2,
+    icon: Plug,
+    titulo: "Conectá tus canales",
+    texto: (
+      <>
+        Pegás tus credenciales de Meta y la URL de webhook que te da Clientany. Tenés el{" "}
+        <Link href="/docs#whatsapp" className="font-semibold text-brand-300 hover:text-brand-200">
+          tutorial paso a paso
+        </Link>{" "}
+        en Docs.
+      </>
+    ),
+  },
+  {
+    n: 3,
     icon: Bot,
-    color: "#06b6d4",
-    title: "Chatbot y automatizaciones",
-    desc: "Menú automático que deriva a la cola correcta, mensajes de bienvenida y ausencia, horarios de atención.",
+    titulo: "Cargá pedidos y stock, y armá tus automáticas",
+    texto: "Subí un CSV o conectá la API. Elegí qué contesta el bot solo y qué le pasa a una persona.",
+  },
+];
+
+const PARA_QUIEN: { icon: LucideIcon; titulo: string; texto: string }[] = [
+  {
+    icon: Store,
+    titulo: "Ecommerce",
+    texto: "Vendés por tu tienda, Mercado Libre e Instagram, y te preguntan «¿hay stock?» y «¿dónde está mi pedido?» todo el día.",
   },
   {
-    icon: Truck,
-    color: "#598bff",
-    title: "Seguí tu envío",
-    desc: "Buscá cualquier pedido por número, mail o nombre y respondé en tiempo real con link de seguimiento propio.",
+    icon: Building2,
+    titulo: "Tiendas con varias marcas",
+    texto: "Dos o tres marcas, cada una con su número y su Instagram. Una bandeja para todas, separadas cuando hace falta.",
   },
   {
-    icon: ShoppingCart,
-    color: "#f59e0b",
-    title: "Recuperador de carritos",
-    desc: "Nos conectamos a tu tienda y convertimos las ventas perdidas con flujos automáticos por WhatsApp y email.",
+    icon: Briefcase,
+    titulo: "Servicios que venden por WhatsApp",
+    texto: "Gimnasios, clínicas, academias, turismo: consultas, turnos y seguimiento sin que nadie se quede sin respuesta.",
   },
   {
-    icon: BookOpen,
-    color: "#25D366",
-    title: "WhatsApp Business completo",
-    desc: "Catálogo de productos, perfil de empresa, etiquetas, listas de difusión y tu link/QR de contacto.",
+    icon: UsersRound,
+    titulo: "Equipos de 1 a 20 personas",
+    texto: "Desde el dueño que atiende solo hasta un equipo de ventas y soporte que necesita repartirse los chats.",
+  },
+];
+
+type Celda =
+  | { v: "si"; sub?: string }
+  | { v: "limitado"; sub?: string }
+  | { v: "no"; sub?: string }
+  | { v: "consultar" }
+  | { v: "texto"; texto: string; sub?: string };
+
+const COMPETIDORES = ["Clientany", "Whaticket", "Leadsales", "Kommo"] as const;
+
+const COMPARATIVA: { tema: string; celdas: [Celda, Celda, Celda, Celda] }[] = [
+  {
+    tema: "Precio de entrada",
+    celdas: [
+      { v: "texto", texto: "US$ 29/mes", sub: "3 usuarios, mensual" },
+      { v: "texto", texto: "~49 €/mes", sub: "3 agentes" },
+      { v: "texto", texto: "US$ 97/mes", sub: "plan Básico, 3 usuarios" },
+      { v: "texto", texto: "US$ 15/usuario", sub: "mínimo 6 meses adelantados" },
+    ],
   },
   {
-    icon: Tag,
-    color: "#FFB000",
-    title: "Mercado Libre + Lead Magnet",
-    desc: "Respondé preguntas y mensajes de ML, y capturá los emails de tus compradores para hacer marketing.",
+    tema: "WhatsApp API oficial",
+    celdas: [{ v: "si" }, { v: "limitado", sub: "QR en muchos planes" }, { v: "limitado", sub: "desde el plan Profesional" }, { v: "si" }],
   },
   {
-    icon: Megaphone,
-    color: "#d946ef",
-    title: "Campañas Email & WhatsApp",
-    desc: "Con tu base de leads lanzá campañas segmentadas y medí las ventas que generan.",
+    tema: "Instagram + Messenger",
+    celdas: [{ v: "si", sub: "incluidos" }, { v: "consultar" }, { v: "si" }, { v: "si" }],
+  },
+  {
+    tema: "Multimarca (varias tiendas, una bandeja)",
+    celdas: [{ v: "si" }, { v: "consultar" }, { v: "consultar" }, { v: "consultar" }],
+  },
+  {
+    tema: "Respuestas automáticas con stock y pedidos",
+    celdas: [{ v: "si" }, { v: "limitado", sub: "chatbot básico" }, { v: "consultar" }, { v: "limitado", sub: "Salesbot desde Advanced" }],
+  },
+  {
+    tema: "IA incluida",
+    celdas: [{ v: "si", sub: "Pro y Empresa" }, { v: "consultar" }, { v: "consultar" }, { v: "consultar" }],
+  },
+  {
+    tema: "Historial de pedidos en el chat",
+    celdas: [{ v: "si" }, { v: "consultar" }, { v: "consultar" }, { v: "consultar" }],
+  },
+  {
+    tema: "API y CSV",
+    celdas: [{ v: "si" }, { v: "consultar" }, { v: "consultar" }, { v: "si" }],
+  },
+  {
+    tema: "Equipo ilimitado en el plan alto",
+    celdas: [{ v: "si", sub: "plan Empresa" }, { v: "consultar" }, { v: "consultar" }, { v: "no", sub: "se cobra por usuario" }],
   },
 ];
 
-// Comparación vs categorías de herramientas (a modo ilustrativo por categoría).
-const comparison = [
-  { feature: "Bandeja multiagente con tickets y colas", clientany: true, whaticket: true, kommo: "partial", wabiz: false },
-  { feature: "Embudo de ventas Kanban (pipeline)", clientany: true, whaticket: false, kommo: true, wabiz: false },
-  { feature: "Chatbot, horarios y respuestas rápidas", clientany: true, whaticket: true, kommo: "partial", wabiz: "partial" },
-  { feature: "Catálogo, etiquetas y difusión de WhatsApp", clientany: true, whaticket: "partial", kommo: false, wabiz: true },
-  { feature: "WhatsApp, IG y ML ilimitados por marca", clientany: true, whaticket: "partial", kommo: "partial", wabiz: false },
-  { feature: "Seguimiento de envíos integrado", clientany: true, whaticket: false, kommo: false, wabiz: false },
-  { feature: "Recuperador de carritos multi-tienda", clientany: true, whaticket: false, kommo: false, wabiz: false },
-  { feature: "Mercado Libre + Lead Magnet", clientany: true, whaticket: false, kommo: false, wabiz: false },
-  { feature: "Campañas de Email + WhatsApp marketing", clientany: true, whaticket: "partial", kommo: "partial", wabiz: "partial" },
-  { feature: "Pensado exclusivamente para ecommerce", clientany: true, whaticket: false, kommo: false, wabiz: false },
+interface PlanLanding {
+  nombre: string;
+  para: string;
+  precio: number;
+  destacado?: boolean;
+  previo?: string;
+  items: string[];
+  cta: { texto: string; href: string };
+}
+
+const PLANES: PlanLanding[] = [
+  {
+    nombre: "Inicial",
+    para: "Para arrancar con un número",
+    precio: 29,
+    items: [
+      "1 número de WhatsApp API + Instagram + Messenger",
+      "3 usuarios",
+      "1 marca",
+      "Bandeja completa",
+      "Respuestas automáticas",
+      "Pedidos y stock por CSV",
+      "1.000 conversaciones por mes",
+    ],
+    cta: { texto: "Empezar gratis", href: "/registro" },
+  },
+  {
+    nombre: "Pro",
+    para: "Para equipos que venden todos los días",
+    precio: 79,
+    destacado: true,
+    previo: "Todo lo de Inicial, y además:",
+    items: [
+      "3 números de WhatsApp API",
+      "10 usuarios",
+      "3 marcas",
+      "API y webhook",
+      "IA incluida",
+      "Plantillas sincronizadas con Meta",
+      "5.000 conversaciones por mes",
+      "Soporte por WhatsApp",
+    ],
+    cta: { texto: "Empezar gratis", href: "/registro" },
+  },
+  {
+    nombre: "Empresa",
+    para: "Para operaciones grandes y multimarca",
+    precio: 149,
+    previo: "Todo lo de Pro, y además:",
+    items: [
+      "Números, usuarios y marcas ilimitados",
+      "Conversaciones ilimitadas",
+      "Onboarding asistido",
+      "Soporte prioritario",
+      "Migración desde Whaticket o Kommo",
+    ],
+    cta: { texto: "Hablar con ventas", href: "mailto:hola@clientany.com?subject=Plan%20Empresa" },
+  },
 ];
 
-const columns: {
-  key: "clientany" | "whaticket" | "kommo" | "wabiz";
-  label: string;
-  highlight?: boolean;
-}[] = [
-  { key: "clientany", label: "Clientany", highlight: true },
-  { key: "whaticket", label: "Apps tipo Whaticket" },
-  { key: "kommo", label: "CRMs tipo Kommo" },
-  { key: "wabiz", label: "WhatsApp Business" },
+const LINK = "font-semibold text-brand-300 underline-offset-2 hover:text-brand-200 hover:underline";
+
+const PREGUNTAS: { q: string; a: ReactNode }[] = [
+  {
+    q: "¿Necesito la API oficial de WhatsApp?",
+    a: (
+      <>
+        Sí. Clientany se conecta sólo por la API oficial de Meta (WhatsApp Business Platform). Es la forma permitida de
+        conectar un sistema a WhatsApp: no corrés el riesgo de que te bloqueen el número por usar herramientas que
+        «leen el QR», los mensajes llegan al instante y podés usar plantillas aprobadas para escribir fuera de la
+        ventana de 24 hs. Conectarla lleva unos 25 minutos con el{" "}
+        <Link href="/docs#whatsapp" className={LINK}>
+          tutorial de Docs
+        </Link>
+        . Los mensajes que cobra Meta se pagan directo a Meta, como con cualquier herramienta de API oficial.
+      </>
+    ),
+  },
+  {
+    q: "¿Puedo seguir usando el celular?",
+    a: (
+      <>
+        Sí. Con Coexistence, Meta permite tener el mismo número en la app WhatsApp Business del celular y en la API a
+        la vez: lo que contestás desde el teléfono también aparece en el chat de Clientany. Los requisitos los define
+        Meta (te los contamos en{" "}
+        <Link href="/docs#coexistence" className={LINK}>
+          Docs
+        </Link>
+        ). Y además Clientany se instala como app en el celular.
+      </>
+    ),
+  },
+  {
+    q: "¿La IA tiene costo extra?",
+    a: "No. En los planes Pro y Empresa la IA viene incluida. En Inicial podés cargar tu propia clave en Configuración y usarla sin pagarnos nada más.",
+  },
+  {
+    q: "¿Cómo cargo mis pedidos y mi stock?",
+    a: (
+      <>
+        Por CSV (lo exportás de tu tienda o de tu planilla y lo subís; acepta coma o punto y coma y encabezados en
+        español o en inglés) o por API, para que tu sistema los mantenga al día solo. También se cargan a mano. Las
+        columnas están en{" "}
+        <Link href="/docs#csv" className={LINK}>
+          Docs
+        </Link>
+        .
+      </>
+    ),
+  },
+  {
+    q: "¿Puedo probar sin registrarme?",
+    a: (
+      <>
+        Sí. La{" "}
+        <Link href="/inbox" className={LINK}>
+          demo
+        </Link>{" "}
+        te abre una bandeja con chats, pedidos y stock de ejemplo. Todo queda en tu navegador y no sale ningún mensaje
+        real. Podés escribir como si fueras un cliente y ver qué contesta el bot.
+      </>
+    ),
+  },
+  {
+    q: "¿Qué pasa cuando termina la prueba?",
+    a: "Elegís un plan y seguís con todo lo que cargaste. Si no elegís ninguno, la cuenta pasa a sólo lectura: ves todo, pero no entra nada nuevo. No se borra nada por 30 días, así podés exportar tus contactos, pedidos y stock en CSV.",
+  },
+  {
+    q: "¿Mis datos están seguros?",
+    a: "Cada empresa está aislada: nadie de otra cuenta puede ver tus chats ni tus clientes. Los tokens de Meta y las claves de IA se guardan cifrados y nunca vuelven al navegador. Los datos viven en Supabase, en la región de São Paulo.",
+  },
+  {
+    q: "¿Puedo migrar desde Whaticket?",
+    a: "Sí. Exportás tus contactos a CSV y los importás en Clientany; tu número se conecta a la API oficial desde Conexiones. En el plan Empresa hacemos la migración con vos.",
+  },
+  {
+    q: "¿Sirve si no tengo ecommerce?",
+    a: "Sí. Si vendés servicios, turnos o a medida por WhatsApp, usás igual la bandeja, el equipo, las respuestas automáticas y las plantillas. Pedidos y stock son opcionales: si no los cargás, el bot simplemente no los usa.",
+  },
 ];
 
-const steps = [
-  { n: 1, title: "Conectá tus canales y tiendas", desc: "WhatsApp, Instagram, Mercado Libre y tu tienda (Tienda Nube, Shopify, VTEX, Vendany). Sin límite." },
-  { n: 2, title: "Unificá y organizá por marca", desc: "Todas tus conversaciones y ventas en un panel, divididas por marca e intercambiables al instante." },
-  { n: 3, title: "Vendé y recuperá en automático", desc: "Seguimiento de envíos, recuperación de carritos y campañas de email + WhatsApp trabajando por vos." },
-];
+// ---------------------------------------------------------------------------
+// Piezas chicas
+// ---------------------------------------------------------------------------
 
-const testimonials = [
-  { name: "Sofía M.", role: "Skincare · 3 marcas", text: "Manejaba 4 WhatsApp y 2 Instagram en teléfonos distintos. Ahora está todo en un lugar y cambio de marca en un toque.", emoji: "🌙" },
-  { name: "Diego R.", role: "Indumentaria", text: "El recuperador de carritos me trajo ventas que daba por perdidas. Se pagó solo en la primera semana.", emoji: "🧥" },
-  { name: "Caro & Nacho", role: "Mates · Mercado Libre", text: "Responder las preguntas de ML desde el mismo lugar y captar los mails para hacer campañas nos cambió el juego.", emoji: "🧉" },
-];
-
-const faqs = [
-  { q: "¿Sirve si vendo en varias plataformas a la vez?", a: "Sí. Conectás Tienda Nube, Shopify, VTEX, Vendany, Mercado Shops y más, además de tus redes. Todo se unifica por marca." },
-  { q: "¿Puedo sumar varios números de WhatsApp e Instagram?", a: "Sin límite. Sumás tantos WhatsApp, Instagram, Messenger y cuentas de Mercado Libre como necesites, y los organizás por marca." },
-  { q: "¿Cómo funciona 'Seguí tu envío'?", a: "Buscás cualquier pedido por número de orden, nombre y apellido o email, ves el estado en tiempo real y le mandás al cliente un link de seguimiento con tu marca." },
-  { q: "¿Necesito instalar algo?", a: "No. Funciona en la web desde la compu y el celular, y se puede instalar como app (PWA). Las apps oficiales de Android e iOS están en camino." },
-  { q: "¿Puedo empezar hoy?", a: "Sí. Creás tu negocio, cargás tus pedidos y contactos (a mano o por CSV) y ya estás operando. Las integraciones de mensajería se activan cuando la plataforma aprueba tu cuenta." },
-];
-
-export default function Landing() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-
+function CeldaComparativa({ celda, propia }: { celda: Celda; propia: boolean }) {
+  if (celda.v === "texto") {
+    return (
+      <div>
+        <div className={`font-bold ${propia ? "text-white" : "text-ink-100"}`}>{celda.texto}</div>
+        {celda.sub && <div className="mt-0.5 text-[11.5px] text-ink-400">{celda.sub}</div>}
+      </div>
+    );
+  }
+  if (celda.v === "consultar") {
+    return <span className="text-[12.5px] text-ink-500">consultar</span>;
+  }
+  const icono =
+    celda.v === "si" ? (
+      <Check className={`h-[18px] w-[18px] ${propia ? "text-brand-300" : "text-green-400"}`} strokeWidth={2.75} />
+    ) : celda.v === "limitado" ? (
+      <Minus className="h-[18px] w-[18px] text-amber-400" strokeWidth={2.75} />
+    ) : (
+      <X className="h-[18px] w-[18px] text-ink-500" strokeWidth={2.75} />
+    );
+  const nombre = celda.v === "si" ? "Sí" : celda.v === "limitado" ? "Limitado" : "No";
   return (
-    <div className="min-h-screen bg-ink-950 text-ink-100">
-      {/* NAV */}
-      <header className="sticky top-0 z-40 border-b border-ink-800/60 bg-ink-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 lg:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-glow">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-extrabold tracking-tight text-white">Clientany</span>
-          </Link>
-          <nav className="hidden items-center gap-7 text-sm font-medium text-ink-300 md:flex">
-            <a href="#features" className="hover:text-white">Funciones</a>
-            <a href="#comparativa" className="hover:text-white">Comparativa</a>
-            <a href="#como" className="hover:text-white">Cómo funciona</a>
-            <a href="#precios" className="hover:text-white">Precios</a>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="btn-ghost hidden px-4 py-2 text-sm sm:inline-flex">
-              Ingresar
-            </Link>
-            <Link href="/registro" className="btn-primary px-4 py-2 text-sm">
-              Probar gratis <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* HERO */}
-      <section className="relative overflow-hidden">
-        <div
-          className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[820px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
-          style={{ background: "radial-gradient(circle, #3563ff, transparent 70%)" }}
-        />
-        <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-14 text-center lg:px-6 lg:pt-20">
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-xs font-medium text-brand-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand-400" /> El CRM multicanal para ecommerces de LATAM
-          </div>
-          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-white lg:text-6xl">
-            Todos tus canales, marcas y ventas{" "}
-            <span className="bg-gradient-to-r from-brand-300 to-fuchsia-400 bg-clip-text text-transparent">
-              en un solo lugar
-            </span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-ink-300 lg:text-lg">
-            Conectá <b className="text-white">WhatsApp, Instagram y Mercado Libre sin límite</b>,
-            seguí tus envíos, recuperá carritos abandonados y hacé campañas de email + WhatsApp.
-            Todo dividido por marca y pensado 100% para ecommerce.
-          </p>
-          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/registro" className="btn-primary w-full px-6 py-3 text-base sm:w-auto">
-              <Rocket className="h-5 w-5" /> Empezar ahora — gratis
-            </Link>
-            <Link href="/track" className="btn-ghost w-full px-6 py-3 text-base sm:w-auto">
-              <Truck className="h-5 w-5" /> Ver “Seguí tu envío”
-            </Link>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-ink-400">
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-green-400" /> Sin tarjeta</span>
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-green-400" /> Listo en minutos</span>
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-green-400" /> PC y mobile</span>
-          </div>
-
-          {/* Channel pills */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-            {channelPills.map((c) => (
-              <div
-                key={c.label}
-                className="flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/80 px-3.5 py-2 text-sm font-medium text-ink-200"
-              >
-                <c.icon className="h-4 w-4" style={{ color: c.color }} />
-                {c.label}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* App mockup band */}
-        <div className="relative mx-auto mt-6 max-w-5xl px-4 lg:px-6">
-          <div className="overflow-hidden rounded-2xl border border-ink-700 bg-ink-900 shadow-card">
-            <div className="flex items-center gap-1.5 border-b border-ink-800 bg-ink-850 px-4 py-2.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-              <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-              <span className="ml-3 text-xs text-ink-500">app.clientany.com/panel</span>
-            </div>
-            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3 lg:p-6">
-              {[
-                { label: "Mensajes sin responder", value: "24", accent: "#3563ff", icon: Inbox },
-                { label: "Carritos por recuperar", value: "$342k", accent: "#f59e0b", icon: ShoppingCart },
-                { label: "Ingresos por campañas", value: "$2.1M", accent: "#16a34a", icon: Megaphone },
-              ].map((k) => (
-                <div key={k.label} className="rounded-xl border border-ink-700 bg-ink-850 p-4 text-left">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: `${k.accent}1f` }}>
-                      <k.icon className="h-5 w-5" style={{ color: k.accent }} />
-                    </div>
-                    <Star className="h-4 w-4 text-ink-600" />
-                  </div>
-                  <div className="mt-3 text-2xl font-extrabold text-white">{k.value}</div>
-                  <div className="text-xs text-ink-400">{k.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* STORES STRIP */}
-      <section className="border-y border-ink-800/60 bg-ink-900/40 py-6">
-        <div className="mx-auto max-w-6xl px-4 lg:px-6">
-          <p className="text-center text-xs font-medium uppercase tracking-wider text-ink-500">
-            Se integra con las tiendas más usadas de LATAM
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-semibold text-ink-300">
-            {stores.map((s) => (
-              <span key={s} className="flex items-center gap-1.5">
-                <Store className="h-4 w-4 text-ink-500" /> {s}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="features" className="mx-auto max-w-6xl px-4 py-16 lg:px-6 lg:py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
-            Todo lo que tu ecommerce necesita para vender más
-          </h2>
-          <p className="mt-3 text-ink-300">
-            No es otro chat multiagente: es una plataforma completa hecha para vender online.
-          </p>
-        </div>
-        <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
-            <div key={f.title} className="card p-6 transition hover:border-brand-500/40">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: `${f.color}1f` }}>
-                <f.icon className="h-6 w-6" style={{ color: f.color }} />
-              </div>
-              <h3 className="mt-4 text-lg font-bold text-white">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-ink-400">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* DIFERENCIAL DESTACADO */}
-      <section className="mx-auto max-w-6xl px-4 pb-4 lg:px-6">
-        <div className="card overflow-hidden">
-          <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2 lg:p-10">
-            <div className="flex flex-col justify-center">
-              <span className="chip w-fit bg-brand-500/15 text-brand-300">La novedad</span>
-              <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white lg:text-3xl">
-                Ilimitado de verdad y dividido por marcas
-              </h2>
-              <p className="mt-3 text-ink-300">
-                La mayoría de las apps te cobran por cada número de WhatsApp o por agente, y mezclan
-                todo en una sola bandeja. En Clientany sumás{" "}
-                <b className="text-white">tantos canales y negocios como quieras</b>, cada uno
-                ordenado por marca, y cambiás de una a otra con un clic — sin costos extra por número.
-              </p>
-              <div className="mt-5 space-y-2.5">
-                {[
-                  "Infinitos WhatsApp, Instagram y Mercado Libre",
-                  "Cada marca con sus canales, tiendas y equipo",
-                  "Vista global para ver todas tus marcas juntas",
-                ].map((t) => (
-                  <div key={t} className="flex items-center gap-2 text-sm text-ink-200">
-                    <Check className="h-4 w-4 text-green-400" /> {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center justify-center rounded-2xl border border-ink-700 bg-ink-850 p-6">
-              <div className="w-full max-w-xs space-y-2">
-                {[
-                  { logo: "🌙", name: "Lunar Cosmética", n: "6 canales" },
-                  { logo: "🧥", name: "Kapeta Indumentaria", n: "4 canales" },
-                  { logo: "🧉", name: "Che Mate", n: "3 canales" },
-                  { logo: "🏠", name: "Petit Hogar", n: "2 canales" },
-                ].map((b, i) => (
-                  <div
-                    key={b.name}
-                    className={`flex items-center gap-3 rounded-xl border p-3 ${
-                      i === 0 ? "border-brand-500/50 bg-brand-500/10" : "border-ink-700 bg-ink-900"
-                    }`}
-                  >
-                    <span className="text-xl">{b.logo}</span>
-                    <span className="flex-1 text-sm font-semibold text-white">{b.name}</span>
-                    <span className="chip bg-ink-800 text-ink-300">{b.n}</span>
-                  </div>
-                ))}
-                <div className="flex items-center gap-2 rounded-xl border border-dashed border-ink-600 p-3 text-sm text-ink-400">
-                  <InfinityIcon className="h-4 w-4" /> Sumá las que quieras
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* COMPARATIVA */}
-      <section id="comparativa" className="mx-auto max-w-6xl px-4 py-16 lg:px-6 lg:py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
-            Por qué Clientany y no otra app
-          </h2>
-          <p className="mt-3 text-ink-300">
-            El helpdesk de una app tipo Whaticket, el embudo de un CRM tipo Kommo y todo lo de
-            WhatsApp Business — juntos y pensados para ecommerce, en una sola plataforma.
-          </p>
-        </div>
-
-        <div className="mt-10 overflow-x-auto">
-          <table className="w-full min-w-[720px] border-separate border-spacing-0">
-            <thead>
-              <tr>
-                <th className="w-[34%] p-3 text-left text-sm font-semibold text-ink-400">Diferencial</th>
-                {columns.map((c) => (
-                  <th
-                    key={c.key}
-                    className={`p-3 text-center text-sm font-bold ${
-                      c.highlight ? "text-white" : "text-ink-400"
-                    }`}
-                  >
-                    {c.highlight ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500/15 px-3 py-1.5 text-brand-200">
-                        <Sparkles className="h-4 w-4" /> {c.label}
-                      </span>
-                    ) : (
-                      c.label
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {comparison.map((row, i) => (
-                <tr key={i} className={i % 2 ? "" : "bg-ink-900/40"}>
-                  <td className="rounded-l-lg p-3 text-sm text-ink-200">{row.feature}</td>
-                  {columns.map((c) => {
-                    const val = row[c.key as keyof typeof row] as boolean | "partial";
-                    return (
-                      <td
-                        key={c.key}
-                        className={`p-3 text-center ${c.highlight ? "bg-brand-500/5" : ""} ${
-                          c.key === "wabiz" ? "rounded-r-lg" : ""
-                        }`}
-                      >
-                        <Cell value={val} highlight={c.highlight} />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-4 text-center text-xs text-ink-500">
-          Comparación por categorías de herramientas, a modo ilustrativo. ✓ = incluido · ~ = parcial
-          o con costo extra · ✕ = no disponible.
-        </p>
-      </section>
-
-      {/* CÓMO FUNCIONA */}
-      <section id="como" className="border-y border-ink-800/60 bg-ink-900/40 py-16 lg:py-24">
-        <div className="mx-auto max-w-6xl px-4 lg:px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
-              Empezás en 3 pasos
-            </h2>
-            <p className="mt-3 text-ink-300">Sin instalar nada, desde la compu o el celular.</p>
-          </div>
-          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
-            {steps.map((s) => (
-              <div key={s.n} className="card p-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15 text-lg font-extrabold text-brand-300">
-                  {s.n}
-                </div>
-                <h3 className="mt-4 text-lg font-bold text-white">{s.title}</h3>
-                <p className="mt-1.5 text-sm text-ink-400">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* MOBILE / MULTIPLATAFORMA */}
-      <section className="mx-auto max-w-6xl px-4 py-16 lg:px-6 lg:py-20">
-        <div className="card flex flex-col items-center gap-6 overflow-hidden p-8 text-center lg:flex-row lg:p-12 lg:text-left">
-          <div className="flex-1">
-            <span className="chip w-fit bg-fuchsia-500/15 text-fuchsia-300">
-              <Smartphone className="h-3.5 w-3.5" /> PC + Mobile
-            </span>
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-white lg:text-3xl">
-              Andá vendiendo desde donde estés
-            </h2>
-            <p className="mt-3 max-w-xl text-ink-300">
-              Clientany funciona perfecto en la computadora y en el celular, y se instala como app.
-              Las <b className="text-white">apps oficiales de Android e iOS</b> están en camino.
-            </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
-              <span className="chip border border-ink-700 bg-ink-850 text-ink-300"><Zap className="h-3.5 w-3.5 text-brand-300" /> Instalable (PWA)</span>
-              <span className="chip border border-ink-700 bg-ink-850 text-ink-300"><ShieldCheck className="h-3.5 w-3.5 text-green-400" /> Datos seguros</span>
-              <span className="chip border border-ink-700 bg-ink-850 text-ink-300">📱 Apps nativas pronto</span>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-end gap-3">
-            <div className="h-40 w-24 rounded-2xl border border-ink-700 bg-gradient-to-b from-ink-800 to-ink-900 p-2 shadow-card">
-              <div className="flex h-full flex-col gap-1.5 rounded-lg bg-ink-950 p-2">
-                <div className="h-2 w-2/3 rounded-full bg-brand-500/60" />
-                <div className="h-8 rounded-md bg-ink-800" />
-                <div className="h-8 rounded-md bg-ink-800" />
-                <div className="mt-auto h-6 rounded-md bg-brand-500/40" />
-              </div>
-            </div>
-            <div className="h-52 w-28 rounded-2xl border border-ink-700 bg-gradient-to-b from-ink-800 to-ink-900 p-2 shadow-glow">
-              <div className="flex h-full flex-col gap-1.5 rounded-lg bg-ink-950 p-2">
-                <div className="h-2 w-1/2 rounded-full bg-fuchsia-400/60" />
-                <div className="h-10 rounded-md bg-ink-800" />
-                <div className="h-10 rounded-md bg-ink-800" />
-                <div className="h-10 rounded-md bg-ink-800" />
-                <div className="mt-auto h-6 rounded-md bg-brand-500/40" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIOS */}
-      <section className="mx-auto max-w-6xl px-4 pb-16 lg:px-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {testimonials.map((t) => (
-            <div key={t.name} className="card p-6">
-              <div className="flex gap-0.5 text-amber-400">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-              <p className="mt-3 text-sm text-ink-200">“{t.text}”</p>
-              <div className="mt-4 flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-800 text-lg">{t.emoji}</span>
-                <div>
-                  <div className="text-sm font-semibold text-white">{t.name}</div>
-                  <div className="text-xs text-ink-400">{t.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* PRECIOS */}
-      <section id="precios" className="mx-auto max-w-6xl px-4 py-16 lg:px-6 lg:py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
-            Un precio simple, todo incluido
-          </h2>
-          <p className="mt-3 text-ink-300">Canales, marcas y usuarios ilimitados. Sin sorpresas.</p>
-        </div>
-        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="card p-7">
-            <div className="text-sm font-semibold text-ink-300">Starter</div>
-            <div className="mt-2 flex items-end gap-1">
-              <span className="text-4xl font-extrabold text-white">$0</span>
-              <span className="mb-1 text-sm text-ink-400">/ para arrancar</span>
-            </div>
-            <p className="mt-2 text-sm text-ink-400">Probá la plataforma completa con tus datos.</p>
-            <ul className="mt-5 space-y-2 text-sm text-ink-200">
-              {["1 marca", "Bandeja unificada", "Seguí tu envío", "Recuperador de carritos"].map((t) => (
-                <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-400" /> {t}</li>
-              ))}
-            </ul>
-            <Link href="/registro" className="btn-ghost mt-6 w-full">Empezar gratis</Link>
-          </div>
-          <div className="card relative border-brand-500/40 p-7 shadow-glow">
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 chip bg-brand-500 text-white">Más elegido</span>
-            <div className="text-sm font-semibold text-brand-300">Growth</div>
-            <div className="mt-2 flex items-end gap-1">
-              <span className="text-4xl font-extrabold text-white">Ilimitado</span>
-            </div>
-            <p className="mt-2 text-sm text-ink-400">Marcas, canales y usuarios sin límite + IA.</p>
-            <ul className="mt-5 space-y-2 text-sm text-ink-200">
-              {["Todo lo de Starter", "Marcas y canales ilimitados", "Mercado Libre + Lead Magnet", "Campañas Email & WhatsApp", "IA de respuestas"].map((t) => (
-                <li key={t} className="flex items-center gap-2"><Check className="h-4 w-4 text-green-400" /> {t}</li>
-              ))}
-            </ul>
-            <Link href="/registro" className="btn-primary mt-6 w-full">Probar Growth</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="mx-auto max-w-3xl px-4 pb-16 lg:px-6">
-        <h2 className="text-center text-2xl font-extrabold tracking-tight text-white lg:text-3xl">
-          Preguntas frecuentes
-        </h2>
-        <div className="mt-8 space-y-2.5">
-          {faqs.map((f, i) => (
-            <div key={i} className="card overflow-hidden">
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="flex w-full items-center justify-between gap-3 p-4 text-left"
-              >
-                <span className="text-sm font-semibold text-white">{f.q}</span>
-                <ChevronDown
-                  className={`h-5 w-5 shrink-0 text-ink-400 transition ${openFaq === i ? "rotate-180" : ""}`}
-                />
-              </button>
-              {openFaq === i && <div className="px-4 pb-4 text-sm text-ink-300">{f.a}</div>}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="mx-auto max-w-6xl px-4 pb-20 lg:px-6">
-        <div className="card relative overflow-hidden p-8 text-center lg:p-14">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-30"
-            style={{ background: "radial-gradient(600px circle at 50% 0%, #3563ff, transparent 60%)" }}
-          />
-          <div className="relative">
-            <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
-              Unificá tu ecommerce y vendé más, desde hoy
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-ink-300">
-              Sumá tus canales, seguí tus envíos y recuperá carritos en una sola plataforma pensada
-              para vos.
-            </p>
-            <Link href="/registro" className="btn-primary mx-auto mt-7 w-fit px-7 py-3 text-base">
-              <Rocket className="h-5 w-5" /> Empezar gratis
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-ink-800 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-ink-400 sm:flex-row lg:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-bold text-white">Clientany</span>
-            <span className="text-ink-500">· CRM multicanal para ecommerce</span>
-          </div>
-          <div className="flex items-center gap-5">
-            <a href="#features" className="hover:text-white">Funciones</a>
-            <a href="#precios" className="hover:text-white">Precios</a>
-            <Link href="/login" className="hover:text-white">Ingresar</Link>
-          </div>
-        </div>
-        <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-xs text-ink-600 lg:px-6">
-          © 2026 Clientany. Hecho para los ecommerces de LATAM 🚀
-        </div>
-      </footer>
+    <div className="flex flex-col items-center">
+      <span className="flex items-center gap-1.5">
+        {icono}
+        <span className={celda.v === "limitado" ? "text-[12px] font-semibold text-amber-300" : "sr-only"}>{nombre}</span>
+      </span>
+      {celda.sub && <span className="mt-0.5 text-[11.5px] text-ink-400">{celda.sub}</span>}
     </div>
   );
 }
 
-function Cell({ value, highlight }: { value: boolean | "partial"; highlight?: boolean }) {
-  if (value === true)
-    return (
-      <span
-        className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full ${
-          highlight ? "bg-brand-500 text-white" : "bg-green-500/15 text-green-400"
-        }`}
-      >
-        <Check className="h-4 w-4" />
-      </span>
-    );
-  if (value === "partial")
-    return <span className="mx-auto block text-lg font-bold text-amber-400/80">~</span>;
+// ---------------------------------------------------------------------------
+// La página
+// ---------------------------------------------------------------------------
+
+export default function Landing() {
   return (
-    <span className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-ink-800 text-ink-500">
-      <X className="h-4 w-4" />
-    </span>
+    <div className="min-h-screen overflow-x-clip bg-ink-950 text-ink-100">
+      <SitioNav />
+
+      <main>
+        {/* ============================== HERO ============================== */}
+        <section className="relative">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-[640px] overflow-hidden">
+            <div className="absolute -top-48 left-1/2 h-[520px] w-[980px] -translate-x-1/2 rounded-full bg-brand-500/[0.16] blur-3xl" />
+          </div>
+          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-10 sm:pt-14 lg:grid-cols-2 lg:gap-10 lg:px-6 lg:pb-24 lg:pt-20">
+            <div>
+              <div className="flex flex-wrap gap-2">
+                {CHIPS_HERO.map((c) => (
+                  <span
+                    key={c.label}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-ink-700 bg-ink-900/80 px-3 py-1.5 text-xs font-semibold text-ink-200"
+                  >
+                    <c.icon className={`h-3.5 w-3.5 ${c.color ? "" : "text-brand-300"}`} style={c.color ? { color: c.color } : undefined} />
+                    {c.label}
+                  </span>
+                ))}
+              </div>
+              <h1 className="mt-6 text-[34px] font-extrabold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[44px] xl:text-[52px]">
+                <span className="block">Todas tus tiendas.</span>
+                <span className="block">Todos tus chats.</span>
+                <span className="block bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text pb-1 text-transparent">
+                  Una sola bandeja.
+                </span>
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-300 sm:text-[17px]">
+                Clientany es el CRM para empresas que venden por chat: conectá tu WhatsApp Business API, tu Instagram y tu
+                Messenger, cargá tus pedidos y tu stock, y atendé todo con tu equipo desde un solo lugar. Con respuestas
+                automáticas que no molestan y una IA que sugiere qué contestar.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
+                <Link href="/inbox" className="btn-primary px-6 py-3.5 text-[15px]">
+                  Probar la demo en vivo <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/registro" className="btn-ghost flex-col gap-0 px-6 py-2 text-[15px] leading-tight">
+                  <span>Empezar gratis</span>
+                  <span className="text-[11.5px] font-medium text-ink-400">14 días, sin tarjeta</span>
+                </Link>
+              </div>
+              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-ink-400">
+                {["La demo no pide registro", "API oficial de Meta", "Mensual, sin permanencia"].map((t) => (
+                  <li key={t} className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-brand-300" strokeWidth={3} /> {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <MaquetaBandeja />
+          </div>
+        </section>
+
+        {/* ======================= FRANJA DE CONFIANZA ======================= */}
+        <section className="border-y border-ink-800/70 bg-ink-900/40">
+          <div className="mx-auto max-w-6xl px-4 py-7 lg:px-6">
+            <p className="text-center text-[11px] font-bold uppercase tracking-wider text-ink-400">Se conecta en minutos con</p>
+            <ul className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+              {CONEXIONES.map((c) => (
+                <li
+                  key={c.label}
+                  className="inline-flex items-center gap-2 rounded-xl border border-ink-700/70 bg-ink-900 px-3.5 py-2 text-[13.5px] font-semibold text-ink-200"
+                >
+                  <c.icon className={`h-4 w-4 ${c.color ? "" : "text-brand-300"}`} style={c.color ? { color: c.color } : undefined} />
+                  {c.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* ============================ FUNCIONES ============================ */}
+        <section id="funciones" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 lg:px-6 lg:py-24">
+          <TituloSeccion
+            etiqueta="Funciones"
+            titulo="Todo lo que pasa en un chat de venta, en un solo lugar"
+            bajada="No es otro WhatsApp multiagente: es la bandeja, la ficha del cliente, el stock y el equipo, conectados entre sí."
+          />
+
+          <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {/* Bandeja por grupos */}
+            <div className="card p-6 sm:p-7">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15">
+                <Inbox className="h-5 w-5 text-brand-300" />
+              </div>
+              <h3 className="mt-4 text-xl font-bold text-white">Bandeja unificada por grupos</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-ink-300">
+                WhatsApp, Instagram y Messenger en una sola lista, ordenada por lo que hay que hacer. El que te volvió a
+                escribir sube solo; lo que pospusiste vuelve cuando toca.
+              </p>
+              <ul className="mt-5 space-y-2">
+                {GRUPOS_BANDEJA.map((g) => (
+                  <li key={g.nombre} className="flex items-center gap-3 text-sm">
+                    <span
+                      className={`inline-flex w-[7.5rem] shrink-0 justify-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        g.activo ? "bg-brand-500/15 text-brand-200" : "bg-ink-800 text-ink-200"
+                      }`}
+                    >
+                      {g.nombre}
+                    </span>
+                    <span className="text-ink-400">{g.detalle}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Automáticas con candados */}
+            <div className="card p-6 sm:p-7">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15">
+                <Bot className="h-5 w-5 text-brand-300" />
+              </div>
+              <h3 className="mt-4 text-xl font-bold text-white">Respuestas automáticas con candados</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-ink-300">
+                Bienvenida, fuera de horario, menú de opciones, reglas por palabra, stock, estado del pedido y «pasar a una
+                persona». Contestan en segundos, con tus datos, y sin molestar:
+              </p>
+              <ul className="mt-5 space-y-2.5">
+                {CANDADOS.map((c) => (
+                  <li key={c} className="flex items-start gap-3 text-sm text-ink-200">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-ink-800">
+                      <Lock className="h-3 w-3 text-brand-300" />
+                    </span>
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {FUNCIONES.map((f) => (
+              <div key={f.titulo} className="card p-5 transition hover:border-brand-500/40">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15">
+                  <f.icon className="h-5 w-5 text-brand-300" />
+                </div>
+                <h3 className="mt-4 text-[15.5px] font-bold text-white">{f.titulo}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-400">{f.texto}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ========================== CÓMO FUNCIONA ========================== */}
+        <section id="como-funciona" className="scroll-mt-20 border-y border-ink-800/70 bg-ink-900/30">
+          <div className="mx-auto max-w-6xl px-4 py-20 lg:px-6 lg:py-24">
+            <TituloSeccion
+              etiqueta="Cómo funciona"
+              titulo="De cero a atendiendo, en una tarde"
+              bajada="Sin instalar nada y sin programador. La API es opcional: el CSV alcanza para empezar."
+            />
+            <ol className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {PASOS.map((p) => (
+                <li key={p.n} className="card relative p-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500 text-sm font-extrabold text-white shadow-glow">
+                      {p.n}
+                    </span>
+                    <p.icon className="h-5 w-5 text-ink-400" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-white">{p.titulo}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-300">{p.texto}</p>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-8 flex justify-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-5 py-2.5 text-[15px] font-bold text-white">
+                <MessagesSquare className="h-4 w-4 text-brand-300" /> ¡A atender!
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================ PARA QUIÉN ============================ */}
+        <section id="para-quien" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 lg:px-6 lg:py-24">
+          <TituloSeccion
+            etiqueta="Para quién"
+            titulo="Para las empresas que venden por chat"
+            bajada="Si tu venta empieza con un «hola, ¿tienen…?», Clientany es para vos."
+          />
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {PARA_QUIEN.map((p) => (
+              <div key={p.titulo} className="card p-5">
+                <p.icon className="h-6 w-6 text-brand-300" />
+                <h3 className="mt-4 text-[15.5px] font-bold text-white">{p.titulo}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-400">{p.texto}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 rounded-2xl border border-ink-700/60 bg-ink-900/50 p-5 sm:flex sm:items-center sm:gap-5 sm:p-6">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-500/15">
+              <Store className="h-5 w-5 text-brand-300" />
+            </span>
+            <p className="mt-3 text-sm leading-relaxed text-ink-300 sm:mt-0">
+              <b className="text-white">Hecho por una tienda que vende todos los días.</b> Clientany nace del sistema con
+              el que FARU FITNESS atiende sus ventas por chat: los grupos de la bandeja, los candados del bot y la ventana
+              de 24 hs existen porque a una tienda real le dolió no tenerlos.
+            </p>
+          </div>
+        </section>
+
+        {/* ============================ COMPARATIVA ============================ */}
+        <section id="comparativa" className="scroll-mt-20 border-y border-ink-800/70 bg-ink-900/30">
+          <div className="mx-auto max-w-6xl px-4 py-20 lg:px-6 lg:py-24">
+            <TituloSeccion
+              etiqueta="Comparativa"
+              titulo="Clientany frente a las otras opciones"
+              bajada="Lo que incluye la entrada de cada una. Donde no lo pudimos confirmar, dice «consultar»."
+            />
+            <div className="relative mt-12 overflow-x-auto rounded-2xl border border-ink-700/60 bg-ink-900">
+              <table className="w-full min-w-[640px] border-collapse text-sm">
+                <caption className="sr-only">Comparativa de Clientany con Whaticket, Leadsales y Kommo</caption>
+                <thead>
+                  <tr className="border-b border-ink-800">
+                    <th scope="col" className="sticky left-0 z-10 w-[150px] bg-ink-900 p-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-400 sm:w-[30%] sm:p-4">
+                      Qué incluye
+                    </th>
+                    {COMPETIDORES.map((c, i) => (
+                      <th
+                        key={c}
+                        scope="col"
+                        className={`p-3 text-center text-[15px] font-bold sm:p-4 ${i === 0 ? "bg-brand-500/15 text-white" : "text-ink-200"}`}
+                      >
+                        {i === 0 ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Sparkles className="h-4 w-4 text-brand-300" /> {c}
+                          </span>
+                        ) : (
+                          c
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARATIVA.map((fila) => (
+                    <tr key={fila.tema} className="border-b border-ink-800/70 last:border-b-0">
+                      <th scope="row" className="sticky left-0 z-10 bg-ink-900 p-3 text-left font-medium text-ink-200 sm:p-4">
+                        {fila.tema}
+                      </th>
+                      {fila.celdas.map((celda, i) => (
+                        <td key={COMPETIDORES[i]} className={`p-3 text-center align-middle sm:p-4 ${i === 0 ? "bg-brand-500/[0.07]" : ""}`}>
+                          <CeldaComparativa celda={celda} propia={i === 0} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-center text-xs text-ink-500 sm:hidden">Deslizá la tabla para ver todas las columnas.</p>
+            <div className="mt-5 flex flex-col items-center gap-2 text-center text-xs text-ink-400">
+              <div className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+                <span className="inline-flex items-center gap-1.5">
+                  <Check className="h-3.5 w-3.5 text-green-400" strokeWidth={3} /> incluido
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Minus className="h-3.5 w-3.5 text-amber-400" strokeWidth={3} /> limitado
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <X className="h-3.5 w-3.5 text-ink-500" strokeWidth={3} /> no
+                </span>
+                <span>consultar: no lo pudimos confirmar</span>
+              </div>
+              <p className="text-ink-500">
+                Comparativa según información pública de cada sitio a octubre de 2026; puede cambiar.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================== PRECIOS ============================== */}
+        <section id="precios" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 lg:px-6 lg:py-24">
+          <TituloSeccion
+            etiqueta="Precios"
+            titulo="Planes claros, todo incluido"
+            bajada="WhatsApp, Instagram, Messenger y el bot vienen en todos los planes. Sin costos ocultos ni permanencia."
+          />
+          <div className="mt-6 flex justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-green-500/25 bg-green-500/[0.08] px-4 py-1.5 text-sm font-semibold text-green-300">
+              <Check className="h-4 w-4" strokeWidth={3} /> 14 días gratis en todos, sin tarjeta
+            </span>
+          </div>
+          <div className="mt-14 grid grid-cols-1 items-stretch gap-5 lg:grid-cols-3">
+            {PLANES.map((p) => (
+              <div
+                key={p.nombre}
+                className={`relative flex flex-col rounded-2xl border p-6 sm:p-7 ${
+                  p.destacado
+                    ? "border-brand-500/60 bg-gradient-to-b from-brand-500/[0.12] to-ink-900 shadow-glow"
+                    : "border-ink-700/60 bg-ink-900/80"
+                }`}
+              >
+                {p.destacado && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-brand-500 px-3.5 py-1 text-xs font-bold text-white shadow-glow">
+                    El más elegido
+                  </span>
+                )}
+                <h3 className="text-lg font-bold text-white">{p.nombre}</h3>
+                <p className="mt-1 text-sm text-ink-400">{p.para}</p>
+                <div className="mt-5 flex items-baseline gap-1.5">
+                  <span className="text-sm font-semibold text-ink-300">US$</span>
+                  <span className="text-5xl font-extrabold tracking-tight text-white">{p.precio}</span>
+                  <span className="text-sm font-medium text-ink-400">/ mes</span>
+                </div>
+                {p.previo && <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-ink-400">{p.previo}</p>}
+                <ul className={`${p.previo ? "mt-3" : "mt-6"} mb-7 space-y-2.5`}>
+                  {p.items.map((it) => (
+                    <li key={it} className="flex items-start gap-2.5 text-sm text-ink-200">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" strokeWidth={2.75} />
+                      {it}
+                    </li>
+                  ))}
+                </ul>
+                {p.cta.href.startsWith("mailto:") ? (
+                  <a href={p.cta.href} className="btn-ghost mt-auto w-full py-3">
+                    {p.cta.texto}
+                  </a>
+                ) : (
+                  <Link href={p.cta.href} className={`${p.destacado ? "btn-primary" : "btn-ghost"} mt-auto w-full py-3`}>
+                    {p.cta.texto} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 space-y-1.5 text-center text-sm text-ink-400">
+            <p>Precios en dólares más impuestos. Pagá anual y ahorrá 20 %.</p>
+            <p className="text-xs text-ink-500">
+              Los mensajes de WhatsApp que cobra Meta se pagan aparte, directo a Meta desde tu cuenta, como con cualquier
+              herramienta que use la API oficial.
+            </p>
+          </div>
+        </section>
+
+        {/* ========================= PREGUNTAS FRECUENTES ========================= */}
+        <section id="preguntas" className="scroll-mt-20 border-t border-ink-800/70 bg-ink-900/30">
+          <div className="mx-auto max-w-3xl px-4 py-20 lg:px-6 lg:py-24">
+            <TituloSeccion etiqueta="Preguntas frecuentes" titulo="Lo que todos preguntan" />
+            <div className="mt-10 space-y-3">
+              {PREGUNTAS.map((p) => (
+                <details key={p.q} className="group rounded-2xl border border-ink-700/60 bg-ink-900/80 open:border-brand-500/30">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-[15px] font-semibold text-white [&::-webkit-details-marker]:hidden">
+                    {p.q}
+                    <ChevronDown className="h-5 w-5 shrink-0 text-ink-400 transition group-open:rotate-180 group-open:text-brand-300" />
+                  </summary>
+                  <div className="px-5 pb-5 text-sm leading-relaxed text-ink-300">{p.a}</div>
+                </details>
+              ))}
+            </div>
+            <p className="mt-6 text-center text-sm text-ink-400">
+              ¿Te quedó otra duda? Escribinos a{" "}
+              <a href="mailto:hola@clientany.com" className={LINK}>
+                hola@clientany.com
+              </a>{" "}
+              o mirá las{" "}
+              <Link href="/docs" className={LINK}>
+                Docs
+              </Link>
+              .
+            </p>
+          </div>
+        </section>
+
+        {/* ============================== CTA FINAL ============================== */}
+        <section id="contacto" className="scroll-mt-20 px-4 py-20 lg:px-6 lg:py-24">
+          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-brand-500/25 bg-ink-900 px-5 py-12 sm:px-10 lg:py-16">
+            <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[720px] -translate-x-1/2 rounded-full bg-brand-500/25 blur-3xl" />
+            <div className="relative text-center">
+              <h2 className="text-[28px] font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+                Dejá de perder ventas entre pestañas
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-base text-ink-300">
+                Probá la demo ahora, sin registrarte. O dejanos tus datos y te ayudamos a conectar tus canales.
+              </p>
+              <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                <Link href="/inbox" className="btn-primary px-6 py-3 text-[15px]">
+                  Probar la demo en vivo <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/registro" className="btn-ghost px-6 py-3 text-[15px]">
+                  Empezar gratis
+                </Link>
+              </div>
+              <div className="mx-auto my-9 flex max-w-2xl items-center gap-3 text-xs font-medium uppercase tracking-wider text-ink-500">
+                <span className="h-px flex-1 bg-ink-700/70" />
+                o te contactamos nosotros
+                <span className="h-px flex-1 bg-ink-700/70" />
+              </div>
+              <FormularioContacto />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <SitioPie />
+    </div>
   );
 }

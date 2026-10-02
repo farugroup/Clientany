@@ -1,10 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+// URL pública para armar los links absolutos de Open Graph. Si la variable
+// viene mal escrita (sin https://), no se cae la app: usa la de producción.
+function urlDelSitio(): URL {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.clientany.com");
+  } catch {
+    return new URL("https://www.clientany.com");
+  }
+}
+const TITULO = "Clientany — El CRM multicanal para empresas que venden por chat";
+const DESCRIPCION =
+  "Conectá tu WhatsApp Business API, tu Instagram y tu Messenger y atendé todo desde una sola bandeja con tu equipo. Pedidos y stock en el chat, respuestas automáticas que no molestan e IA que sugiere qué contestar.";
+
 export const metadata: Metadata = {
-  title: "Clientany — CRM multicanal para ecommerce",
-  description:
-    "El CRM multicanal para ecommerces de LATAM. Conectá WhatsApp, Instagram, Mercado Libre y tu tienda. Bandeja unificada, seguimiento de envíos, recuperador de carritos y campañas de email + WhatsApp.",
+  metadataBase: urlDelSitio(),
+  title: TITULO,
+  description: DESCRIPCION,
   manifest: "/manifest.json",
   applicationName: "Clientany",
   appleWebApp: {
@@ -13,6 +26,19 @@ export const metadata: Metadata = {
     title: "Clientany",
   },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    siteName: "Clientany",
+    title: TITULO,
+    description: DESCRIPCION,
+    url: "/",
+  },
+  twitter: {
+    card: "summary",
+    title: TITULO,
+    description: DESCRIPCION,
+  },
 };
 
 export const viewport: Viewport = {

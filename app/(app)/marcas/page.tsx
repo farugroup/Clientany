@@ -236,7 +236,7 @@ function BrandModal({ brand, onClose }: { brand?: Brand; onClose: () => void }) 
             <p className="mt-1 text-sm text-ink-400">
               Ahora conectá sus canales y tiendas para empezar a vender.
             </p>
-            <a href="/channels" className="btn-primary mt-4 w-full">
+            <a href="/conexiones" className="btn-primary mt-4 w-full">
               Conectar canales
             </a>
           </div>

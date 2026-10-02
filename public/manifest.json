@@ -1,8 +1,10 @@
 {
-  "name": "Clientany — CRM multicanal para ecommerce",
+  "name": "Clientany — CRM multicanal",
   "short_name": "Clientany",
-  "description": "CRM multicanal para ecommerces de LATAM: WhatsApp, Instagram, Mercado Libre, seguimiento de envíos, recuperador de carritos y campañas.",
-  "start_url": "/panel",
+  "description": "El CRM para empresas que venden por chat: WhatsApp Business API, Instagram y Messenger en una sola bandeja, con pedidos, stock, respuestas automáticas y tu equipo.",
+  "lang": "es-AR",
+  "start_url": "/inbox",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0d1a",
   "theme_color": "#3563ff",

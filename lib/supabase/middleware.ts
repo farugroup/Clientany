@@ -5,19 +5,26 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, isSupabaseConfigured } from "./config"
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 // Rutas de la app que requieren sesión cuando Supabase está configurado.
+// Quedan públicas: `/` (landing), `/docs`, `/privacidad`, `/terminos`,
+// `/track` (seguimiento para clientes), `/login`, `/registro` y las APIs
+// (el matcher de middleware.ts ya excluye `/api/*`).
 const PROTECTED_PREFIXES = [
   "/panel",
   "/inbox",
+  "/clientes",
+  "/pedidos",
+  "/stock",
+  "/automaticas",
+  "/plantillas",
   "/embudo",
-  "/atencion",
-  "/channels",
-  "/catalogo",
-  "/mercadolibre",
   "/tracking",
   "/carritos",
   "/campanas",
   "/difusion",
+  "/mercadolibre",
   "/marcas",
+  "/conexiones",
+  "/equipo",
   "/ajustes",
 ];
 

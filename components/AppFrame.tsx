@@ -7,7 +7,7 @@ import MobileNav from "@/components/MobileNav";
 import Onboarding from "@/components/Onboarding";
 import { useData, useHydrated } from "@/lib/data-store";
 import { useCloudWorkspace } from "@/lib/cloud-sync";
-import { CrmArranque } from "@/lib/crm/index";
+import { CrmArranque, modoCrm } from "@/lib/crm/index";
 import { Avisos } from "@/components/crm/ui";
 
 export default function AppFrame({ children }: { children: React.ReactNode }) {
@@ -39,7 +39,9 @@ export default function AppFrame({ children }: { children: React.ReactNode }) {
         <MobileNav />
       </div>
       <Avisos />
-      {!onboardingDone && <Onboarding />}
+      {/* En modo demo se entra directo a la bandeja: el onboarding viejo
+          (negocio + primera marca) queda para las cuentas reales. */}
+      {!onboardingDone && modoCrm() === "nube" && <Onboarding />}
     </div>
   );
 }
