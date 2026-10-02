@@ -98,6 +98,16 @@ export function normalizarTelefono(raw: string | undefined | null, paisDefault =
     if (d.startsWith("54") && d.length === 13) return d;
     if (d.startsWith("0")) d = d.slice(1); // 011…
     if (d.startsWith("15") && d.length === 10) d = d.slice(2); // 15 xxxx xxxx (sin área)
+    // área + 15 + número («11 15 2222-1111», «351 15 555 1020», «2345 15 123456»):
+    // sacando el 15 tienen que quedar los 10 dígitos de siempre
+    if (d.length === 12 && !d.startsWith("54")) {
+      for (const area of [2, 3, 4]) {
+        if (d.slice(area, area + 2) === "15") {
+          d = d.slice(0, area) + d.slice(area + 2);
+          break;
+        }
+      }
+    }
     if (d.length === 10) return "549" + d; // 11 5555 1234
     if (d.length === 8) return "54911" + d; // sin área: asumimos AMBA
     if (d.length >= 11 && !d.startsWith("54")) return d; // otro país
