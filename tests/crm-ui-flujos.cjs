@@ -272,6 +272,11 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
     await dlg.getByPlaceholder(/5555-1234/).fill("11 2222-3333");
     await dlg.getByRole("button", { name: /Guardar|Crear/ }).last().click();
     await page.getByText("Ramiro Prueba").first().waitFor();
+    // se abre la ficha del cliente nuevo: se cierra para seguir con la tabla
+    const cerrar = page.getByRole("button", { name: /^Cerrar( la ficha)?$/ }).last();
+    if (await cerrar.isVisible().catch(() => false)) await cerrar.click();
+    else await page.keyboard.press("Escape");
+    await esperar(300);
   });
   await paso("Clientes: importar CSV con vista previa", async () => {
     const csv = csvTemporal(salida, "clientes.csv", "nombre,telefono,email,localidad\nAna Import,11 5000-1111,ana@import.com,Rosario\nLuis Import,11 5000-2222,luis@import.com,Córdoba\n");
@@ -300,8 +305,8 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
     await dlg.getByPlaceholder(/#1234/).fill(numeroPedido);
     await dlg.getByPlaceholder(/Sofía Pérez/).fill("Ramiro Prueba");
     await dlg.getByPlaceholder(/5555-1234/).fill("11 2222-3333");
-    const prod = dlg.getByRole("combobox", { name: /^Producto$/ }).first();
-    if (await prod.isVisible().catch(() => false)) await prod.selectOption({ index: 1 });
+    await dlg.getByPlaceholder(/Nombre del product/).first().fill("Sérum de prueba");
+    await dlg.getByPlaceholder(/^Precio$/).first().fill("1500");
     await dlg.getByRole("button", { name: /Cargar pedido|Guardar/ }).click();
     await page.getByText(numeroPedido).first().waitFor();
   });
@@ -400,6 +405,8 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
     const dlg = page.getByRole("dialog");
     await dlg.getByPlaceholder(/pedido_enviado/).fill("prueba_local");
     await dlg.getByPlaceholder(/tu pedido \{\{2\}\}/).fill("Hola {{1}}, tu pedido {{2}} ya salió.");
+    await dlg.getByPlaceholder(/^Sofía$/).fill("Ramiro");
+    await dlg.getByPlaceholder(/^#1234$/).fill("#5001");
     await dlg.getByRole("button", { name: /^Guardar plantilla$/ }).click();
     await page.getByText("prueba_local").first().waitFor();
   });
@@ -420,7 +427,8 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
     await page.getByRole("button", { name: /WhatsApp Business API/ }).first().click();
     const dlg = page.getByRole("dialog");
     await dlg.waitFor();
-    await dlg.getByText(/api\/webhooks\/meta/).first().waitFor();
+    const url = await dlg.locator("input[readonly]").first().inputValue();
+    if (!/\/api\/webhooks\/meta\//.test(url)) throw new Error("la URL del webhook no aparece: " + url);
     await dlg.getByRole("button", { name: /^Copiar/ }).first().click();
     await dlg.getByPlaceholder(/1093x/).fill("1093000000001");
     await dlg.getByPlaceholder(/1057x/).fill("1057000000001");

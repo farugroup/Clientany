@@ -44,6 +44,11 @@ export function ChatPanel({
   const zona = empresa?.horario?.zona || ZONA_DEFAULT;
   // La ficha va como columna sólo con pantalla ancha (lg); en tablet y celular, como hoja.
   const anchaParaFicha = useMediaQuery("(min-width: 1024px)") === true;
+  // En pantalla angosta la ficha es una hoja que se abre SÓLO a pedido: la
+  // preferencia guardada («ficha abierta» en la compu) no la abre sola.
+  const [hojaFicha, setHojaFicha] = useState(false);
+  const fichaVisible = anchaParaFicha ? fichaAbierta : hojaFicha;
+  const alternarFicha = () => (anchaParaFicha ? onFicha(!fichaAbierta) : setHojaFicha((v) => !v));
 
   const [cita, setCita] = useState<Mensaje | null>(null);
   const [adjunto, setAdjunto] = useState<File | null>(null);
@@ -252,8 +257,8 @@ export function ChatPanel({
               yo={yo}
               esAdmin={esAdmin}
               esCelular
-              fichaAbierta={fichaAbierta}
-              onFicha={() => onFicha(!fichaAbierta)}
+              fichaAbierta={fichaVisible}
+              onFicha={alternarFicha}
               onNota={abrirNota}
               onBorrada={onBorrada}
             />
@@ -301,8 +306,8 @@ export function ChatPanel({
             yo={yo}
             esAdmin={esAdmin}
             esCelular={false}
-            fichaAbierta={fichaAbierta}
-            onFicha={() => onFicha(!fichaAbierta)}
+            fichaAbierta={fichaVisible}
+            onFicha={alternarFicha}
             onNota={abrirNota}
             onBorrada={onBorrada}
           />
@@ -393,7 +398,7 @@ export function ChatPanel({
         </div>
       )}
       {!anchaParaFicha && (
-        <Modal abierto={fichaAbierta} onCerrar={() => onFicha(false)} titulo="Ficha del cliente" ancho="lg">
+        <Modal abierto={hojaFicha} onCerrar={() => setHojaFicha(false)} titulo="Ficha del cliente" ancho="lg">
           <div className="-mx-5 -my-4 h-[75vh]">{ficha}</div>
         </Modal>
       )}
