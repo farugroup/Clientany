@@ -49,11 +49,17 @@ async function esperarServidor(url, ms = 180000) {
 }
 
 function levantar(puerto, env) {
+  // Grupo de procesos propio: `next dev` lanza un hijo (next-server) que
+  // sobrevive a un kill del padre si no se mata el grupo entero.
   const p = cp.spawn("npx", ["next", "dev", "-p", String(puerto)], {
     cwd: raiz,
     env: { ...process.env, ...env, PORT: String(puerto) },
     stdio: ["ignore", "pipe", "pipe"],
+    detached: true,
   });
+  p.matar = (senal) => {
+    try { process.kill(-p.pid, senal); } catch {}
+  };
   const log = fs.createWriteStream(path.join(salida, `server-${puerto}.log`));
   p.stdout.pipe(log);
   p.stderr.pipe(log);
@@ -153,12 +159,12 @@ async function flujos(nombreModo, base, browser) {
       console.log(`\n== Modo ${m.nombre} en ${base}`);
       await recorrer(m.nombre, base, browser);
       await flujos(m.nombre, base, browser);
-      srv.kill("SIGTERM");
+      srv.matar("SIGTERM");
     }
   } finally {
     await browser.close();
     for (const s of servidores) {
-      try { s.kill("SIGKILL"); } catch {}
+      try { s.matar("SIGKILL"); } catch {}
     }
   }
   fs.writeFileSync(path.join(salida, "crm-ui-resultados.txt"), resultados.join("\n"));
