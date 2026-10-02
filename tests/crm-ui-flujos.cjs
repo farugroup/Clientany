@@ -28,6 +28,22 @@ async function limpiar(page) {
   await page.keyboard.press("Escape").catch(() => {});
 }
 
+// El onboarding viejo (negocio + marca) aparece en modo nube la primera vez
+// que un navegador entra: se completa «de cero».
+async function completarAlta(pg, esperar) {
+  const alta = pg.getByPlaceholder(/Mi Tienda Online/);
+  if (!(await alta.isVisible().catch(() => false))) return;
+  await alta.fill("Empresa de prueba");
+  await pg.getByPlaceholder(/Nombre y apellido/).first().fill("Dev Prueba");
+  await pg.getByPlaceholder(/hola@tunegocio/).fill("dev@clientany.com");
+  await pg.getByRole("button", { name: /Continuar/ }).click();
+  await pg.getByText(/Empezar de cero/).first().click();
+  await esperar(400);
+  const seguir = pg.getByRole("button", { name: /Continuar|Crear|Listo|Empezar/ }).first();
+  if (await seguir.isVisible().catch(() => false)) await seguir.click();
+  await esperar(600);
+}
+
 async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   page.setDefaultTimeout(10000);
   const paso = async (nombre, fn) => {
@@ -60,23 +76,13 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
       const r = await page.request.post(base + "/api/crm/demo");
       if (!r.ok()) throw new Error("POST /api/crm/demo → " + r.status());
       await ir("/panel");
-      const alta = page.getByPlaceholder(/Mi Tienda Online/);
-      if (await alta.isVisible().catch(() => false)) {
-        await alta.fill("Empresa de prueba");
-        await page.getByPlaceholder(/Nombre y apellido/).first().fill("Dev Prueba");
-        await page.getByPlaceholder(/hola@tunegocio/).fill("dev@clientany.com");
-        await page.getByRole("button", { name: /Continuar/ }).click();
-        await page.getByText(/Empezar de cero/).first().click();
-        await esperar(400);
-        const seguir = page.getByRole("button", { name: /Continuar|Crear|Listo|Empezar/ }).first();
-        if (await seguir.isVisible().catch(() => false)) await seguir.click();
-        await esperar(600);
-      }
+      await completarAlta(page, esperar);
     });
   }
 
   // ======================= BANDEJA =======================
-  await ir("/inbox");
+  // En nube el simulador «Probar como cliente» se muestra sólo con ?simular=1.
+  await ir(modo === "nube" ? "/inbox?simular=1" : "/inbox");
   await paso("Bandeja: la lista tiene chats", async () => {
     await page.getByRole("textbox", { name: /Buscar conversaciones/ }).waitFor({ timeout: 15000 });
     await fila().waitFor({ timeout: 10000 });
@@ -561,6 +567,7 @@ async function correr({ page, base, t, esperar, modo, salida, CAPTURAS }) {
   try {
     await cel.goto(base + "/inbox", { waitUntil: "networkidle", timeout: 60000 });
     await esperar(600);
+    await completarAlta(cel, esperar);
     await pasoCel("Celular: lista → chat → «⋯» → acción → volver, sin scroll horizontal", async () => {
       await cel.getByRole("button", { name: /Sofía|Mica|Juan|Valentina|Tomás|Flor|Lucas|Rocío|Lucía|Camila/ }).first().click();
       await cel.getByRole("textbox", { name: /^Mensaje$/ }).waitFor();

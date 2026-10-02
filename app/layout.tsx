@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Clientany",
   },
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/favicon-32.png", sizes: "32x32", type: "image/png" }], apple: "/apple-touch-icon.png" },
   openGraph: {
     type: "website",
     locale: "es_AR",
